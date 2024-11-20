@@ -1,6 +1,5 @@
 <?php
-
-require_once __DIR__ . '/../autoload.php';
+namespace blackjack;
 
 class GameActions
 {
@@ -8,7 +7,11 @@ class GameActions
 
     public function __construct()
     {
-        $this->conn = Database::getInstance()->getConnection();    }
+        $this->conn = Database::getInstance()->getConnection();
+    }
+
+
+
     public function hit($game_id, $user_id)
     {
         $deck = $this->getDeck($game_id);
@@ -21,6 +24,8 @@ class GameActions
 
         return ['card' => $card];
     }
+
+
     public function stand($game_id, $user_id)
     {
         $stmt = $this->conn->prepare("INSERT INTO actions (action, game_id, user_id) VALUES ('hit', ?, ?);");
@@ -29,6 +34,8 @@ class GameActions
 
         return ['status' => 'Player has chosen to stand'];
     }
+
+
     public function split($game_id, $user_id)
     {
         $cards = $this->getUserCards($game_id, $user_id);
@@ -43,6 +50,8 @@ class GameActions
 
         return ['status' => 'Player has split their hand'];
     }
+
+
     public function double($game_id, $user_id)
     {
         $deck = $this->getDeck($game_id);
@@ -55,6 +64,8 @@ class GameActions
 
         return ['card' => $card, 'status' => 'Bet doubled and one card dealt'];
     }
+
+
     private function getDeck($game_id)
     {
         $stmt = $this->conn->prepare("SELECT deck FROM games WHERE game_id = ?");
@@ -66,6 +77,7 @@ class GameActions
         return json_decode($deck_json, true);
     }
 
+
     private function updateDeck($game_id, $deck)
     {
         $stmt = $this->conn->prepare("UPDATE games SET deck = ? WHERE game_id = ?");
@@ -74,6 +86,7 @@ class GameActions
         $stmt->execute();
     }
 
+
     private function insertCard($game_id, $user_id, $card, $action)
     {
         $stmt = $this->conn->prepare("INSERT INTO actions (game_id, user_id, card, action) VALUES (?, ?, ?, ?)");
@@ -81,6 +94,7 @@ class GameActions
         $stmt->execute();
     }
 
+    
     private function getUserCards($game_id, $user_id)
     {
         $stmt = $this->conn->prepare("SELECT card FROM actions WHERE game_id = ? AND user_id = ?");
@@ -90,4 +104,3 @@ class GameActions
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 }
-

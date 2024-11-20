@@ -1,6 +1,7 @@
 <?php
 
-require_once __DIR__ . '/autoload.php';
+use blackjack\Response;
+use blackjack\User;
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -11,12 +12,15 @@ if (isset($data['username']) && isset($data['password'])) {
     $user = new User();
 
     $userId = $user->create($username, $password);
-    var_dump($userId);
+
     if ($userId) {
-        echo json_encode(['message' => 'Registration successful', 'user_id' => $userId]);
+        // Use the success method from the Response class
+        Response::success('Registration successful', ['user_id' => $userId]);
     } else {
-        echo json_encode(['error' => 'Registration failed']);
+        // Use the error method from the Response class
+        Response::error('Registration failed');
     }
 } else {
-    echo json_encode(['error' => 'Missing required fields (username, password)']);
+    // Use the error method from the Response class
+    Response::error('Missing required fields (username, password)');
 }

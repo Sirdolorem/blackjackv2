@@ -1,0 +1,61 @@
+[2024-11-20 16:04:35] Error 500: Column 'game_id' cannot be null
+[2024-11-20 16:24:48] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`games`, CONSTRAINT `fk_game_players` FOREIGN KEY (`players_id`) REFERENCES `players` (`players_id`))
+[2024-11-20 16:49:41] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`games`, CONSTRAINT `fk_game_players` FOREIGN KEY (`players_id`) REFERENCES `players` (`players_id`))
+[2024-11-20 16:54:33] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE ON UPDATE CASCADE)
+[2024-11-20 16:58:06] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE ON UPDATE CASCADE)
+[2024-11-20 16:58:08] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE ON UPDATE CASCADE)
+[2024-11-20 16:58:09] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE ON UPDATE CASCADE)
+[2024-11-20 17:15:25] Error 400: Missing game_id or user_id
+[2024-11-20 17:16:09] Error 400: Unable to join the game
+[2024-11-20 17:54:54] Error 400: Game not exists
+[2024-11-20 17:55:19] Error 400: Game of id QJ8AG7 don't exists
+[2024-11-20 17:56:12] Error 400: Game of id QJ8AG7 doesn't exist
+[2024-11-20 17:56:27] Error 400: Game of id QJ8AG7 doesn't exist
+[2024-11-20 17:57:13] Error 400: Game of id QJ8AG7 doesn't exist
+[2024-11-20 17:58:59] Error 400: Game of id QJ8AG7 doesn't exist
+[2024-11-20 17:59:00] Error 400: Game of id QJ8AG7 doesn't exist
+[2024-11-20 18:01:16] Error 400: User is already in a game
+[2024-11-20 18:01:48] Error 400: Missing required fields (username, password)
+[2024-11-20 18:11:51] Error 400: User is already in a game
+[2024-11-20 18:29:20] Error 400: Authorization header is missing.
+[2024-11-20 18:33:39] Error 400: Authorization header is missing.
+[2024-11-20 18:35:02] Error 400: Authorization header is missing.
+[2024-11-20 18:36:39] Error 400: Authorization header is missing.
+[2024-11-20 18:37:33] Error 400: Authorization header is missing.
+[2024-11-20 18:37:38] Error 400: {"error":"User not found"}
+[2024-11-20 18:38:10] Error 400: Authorization header is missing.
+[2024-11-20 18:38:14] Error 400: Authorization header is missing.
+[2024-11-20 18:39:31] Error 400: Authorization header is missing.
+[2024-11-20 18:39:33] Error 400: Authorization header is missing.
+[2024-11-20 18:43:45] Error 400: Wrong number of segments
+[2024-11-20 18:48:10] Error 400: Invalid token
+[2024-11-20 18:48:21] Error 400: Invalid token
+[2024-11-20 18:48:48] Error 400: Invalid token
+[2024-11-20 18:48:50] Error 400: Invalid token
+[2024-11-20 18:52:22] Error 400: Invalid token
+[2024-11-20 18:52:54] Error 400: Invalid token
+[2024-11-20 19:03:59] Error 400: Invalid token
+[2024-11-20 22:47:00] Error 400: Token has expired
+[2024-11-20 22:47:18] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 22:50:03] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 22:50:21] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 22:50:53] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 22:54:54] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 22:58:08] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 23:00:44] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`games`, CONSTRAINT `fk_game_players` FOREIGN KEY (`players_id`) REFERENCES `players` (`players_id`))
+[2024-11-20 23:01:24] Error 500: Cannot add or update a child row: a foreign key constraint fails (`blackjack`.`players`, CONSTRAINT `fk_game_id` FOREIGN KEY (`game_id`) REFERENCES `games` (`game_id`) ON DELETE CASCADE)
+[2024-11-20 23:08:43] Error 500: Unknown column 'player_id' in 'field list'
+[2024-11-20 23:09:33] Error 400: {"error":"Username already exists"}
+[2024-11-20 23:10:49] Error 400: Invalid token
+[2024-11-20 23:33:49] Error 400: User is already in a game
+[2024-11-20 23:55:42] Error 400: {"error":"Invalid password"}
+[2024-11-20 23:58:36] Error 400: Game not found
+[2024-11-20 23:58:55] Error 400: Game not found
+[2024-11-20 23:59:21] Error 400: Game not found
+[2024-11-21 00:02:22] Error 400: Game not found
+[2024-11-21 00:03:03] Error 400: Game not found
+[2024-11-21 00:06:31] Error 400: Invalid deck data
+[2024-11-21 00:07:24] Error 400: Invalid deck data
+[2024-11-21 00:11:56] Error 400: Token has expired
+[2024-11-21 00:12:01] Error 400: Token has expired
+[2024-11-21 00:12:32] Error 400: No game found with the provided game_id.

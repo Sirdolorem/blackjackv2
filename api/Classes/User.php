@@ -1,101 +1,126 @@
 <?php
+namespace blackjack;
 
-require_once __DIR__ . '/../autoload.php';
+use blackjack\Helpers\UserDatabaseHelper;
+use blackjack\JWTAuth;
+use blackjack\Response;
 
-class User
+class User extends UserDatabaseHelper
 {
-    private $conn;
-    private $jwt;
+    private JWTAuth $jwt;
+
 
     public function __construct()
     {
-        $this->conn = Database::getInstance()->getConnection();
-        $this->jwt = new JWTAuth();    }
-
-    /**
-     * Create a new user
-     *
-     * @param string $username
-     * @param string $password
-     * @return int|false The new user ID or false on failure
-     */
-    public function create(string $username, string $password): string|bool
-    {
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $this->conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-        $stmt->bind_param("ss", $username, $hashedPassword);
-        $stmt->execute();
-        $user = $this->getUser($username);
-        return $user["user_id"] ?: false;
+        parent::__construct();
+        $this->jwt = new JWTAuth();
     }
 
-    /**
-     * Login a user and generate a JWTAuth
-     *
-     * @param string $username
-     * @param string $password
-     * @return array The JWTAuth or error message
-     */
-    public function login(string $username, string $password): array
+    private function generateUserId(): string
     {
-        $stmt = $this->conn->prepare("SELECT user_id, password, username FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $stmt->store_result();
-        $stmt->bind_result($userId, $hashedPassword, $usernameResult);
-        if ($stmt->fetch()) {
-            if (password_verify($password, $hashedPassword)) {
-                $payload = [
-                    'iat' => time(),
-                    'exp' => time() + 3600,
-                    'user_id' => $userId,
-                    'username' => $usernameResult,
-                ];
-                $token = $this->jwt->generateToken($payload);
-                return ['token' => $token];
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $userId = 'U_'; // Start with 'U_'
+
+    // Generate the next 4 characters
+        for ($i = 0; $i < 4; $i++) {
+            $userId .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        return $userId;
+    }
+
+/**
+* Create a new user if username is unique
+*
+* @param string $username
+* @param string $password
+*/
+    public function create(string $username, string $password)
+    {
+        if ($this->getUserByUsername($username)) {
+            Response::error(['error' => 'Username already exists']);
+            return;
+        }
+
+        $hashedPassword = $this->hashPassword($password);
+        $userId = $this->generateUserId();
+
+    // Call the method to create the user
+        if ($this->createUser($userId, $username, $hashedPassword)) {
+            $user = $this->getUserByUsername($username);
+            if ($user) {
+                Response::success(['user_id' => $user["user_id"]]);
             } else {
-                return ['error' => 'Invalid password'];
+                Response::error(['error' => 'Failed to retrieve the user after creation']);
             }
         } else {
-            return ['error' => 'User not found'];
-        }
-
-    }
-
-    /**
-     * Get a user by username
-     *
-     * @param string $username
-     * @return array|null The user data or null if not found
-     */
-    public function getUser(string $username): ?array
-    {
-        try {
-            $stmt = $this->conn->prepare("SELECT * FROM users WHERE username = ?");
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                return $result->fetch_assoc();
-            }
-            return null;
-        } catch (mysqli_sql_exception $e) {
-            error_log($e->getMessage());
-            return null;
+            Response::error(['error' => 'Error creating user']);
         }
     }
 
-    /**
-     * Verify user password
-     *
-     * @param string $username
-     * @param string $password
-     * @return bool True if password is correct, false otherwise
-     */
-    public function verifyPassword(string $username, string $password): bool
+/**
+* Login a user and generate a JWTAuth token
+*
+* @param string $username
+* @param string $password
+*/
+    public function login(string $username, string $password)
     {
-        $user = $this->getUser($username);
-        return $user && password_verify($password, $user['password']);
+        $user = $this->getUserByUsername($username);
+
+        if (!$user) {
+            Response::error(['error' => 'User not found']);
+            return;
+        }
+
+        if (!$this->verifyPassword($password, $user['password'])) {
+            Response::error(['error' => 'Invalid password']);
+            return;
+        }
+
+        $token = $this->generateUserToken($user['user_id'], $user['username']);
+        Response::success(['token' => $token]);
+    }
+
+/**
+* Hashes a password for storage
+*
+* @param string $password
+* @return string The hashed password
+*/
+    private function hashPassword(string $password): string
+    {
+        return password_hash($password, PASSWORD_BCRYPT);
+    }
+
+/**
+* Verify a hashed password
+*
+* @param string $password
+* @param string $hashedPassword
+* @return bool True if password matches, false otherwise
+*/
+    private function verifyPassword(string $password, string $hashedPassword): bool
+    {
+        return password_verify($password, $hashedPassword);
+    }
+
+/**
+* Generate JWT token for the user
+*
+* @param string $userId
+* @param string $username
+* @return string The JWT token
+*/
+    private function generateUserToken(string $userId, string $username): string
+    {
+        $payload = [
+        'iat' => time(),
+        'exp' => time() + 3600,
+        'user_id' => $userId,
+        'username' => $username,
+        ];
+
+        return $this->jwt->generateToken($payload);
     }
 }

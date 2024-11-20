@@ -1,8 +1,10 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+namespace blackjack;
 
-
+require_once(__DIR__ . "/../vendor/autoload.php");
 use Dotenv\Dotenv;
+use Exception;
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT as FirebaseJWT;
 use Firebase\JWT\Key;
 
@@ -36,16 +38,19 @@ class JWTAuth
 
     /**
      * Decodes and validates a JWTAuth.
-     * @param string $token - The JWTAuth to validate.
      * @return object|bool - The decoded token payload if valid, false otherwise.
      */
-    public function validateToken(string $token)
+    public function validateToken()
     {
+        $headers = getallheaders();
+        $token = $headers['Authorization'] ?? '';
+        $token = str_replace('Bearer ', '', $token);
         try {
             return FirebaseJWT::decode($token, new Key($this->secretKey, $this->algorithm));
-        } catch (\Exception $e) {
-
-            return false;
+        } catch (ExpiredException $e) {
+            Response::error('Token has expired');
+        } catch (Exception $e) {
+            Response::error('Invalid token');
         }
     }
 }

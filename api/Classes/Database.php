@@ -1,13 +1,21 @@
 <?php
+namespace blackjack;
+
+use mysqli;
+use mysqli_sql_exception;
 
 class Database
 {
     private static $instance;
     private $connection;
+
+
     private function __construct()
     {
         $this->connection = $this->connect();
     }
+
+
     public static function getInstance()
     {
         if (self::$instance === null) {
@@ -16,6 +24,8 @@ class Database
 
         return self::$instance;
     }
+
+
     private function connect()
     {
         $host = $_ENV['DB_HOST'] ?? 'localhost';
@@ -31,6 +41,8 @@ class Database
 
         return $connection;
     }
+
+
     public function getConnection()
     {
         return $this->connection;
@@ -40,10 +52,15 @@ class Database
     {
         $this->connection->close();
     }
+
+
     public function __destruct()
     {
         $this->connection->close();
     }
+
+
+    
     private function __clone() {}
     public function __wakeup() {}
 }

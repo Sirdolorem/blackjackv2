@@ -1,6 +1,13 @@
 <?php
+namespace blackjack;
 
-require_once __DIR__ . '/autoload.php';
+require_once "autoload.php";
+
+use blackjack\JWTAuth;
+use blackjack\Response;
+
+Middleware::validateToken();
+
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -9,21 +16,20 @@ header('Access-Control-Allow-Methods: POST');
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
 
+
+
+$parts = explode("/", $requestUri);
+$handler = end($parts);
+
+$handlerFilePath = "handlers/$handler.php";
+
 if ($method == 'POST') {
-    switch ($requestUri) {
-        case '/register':
-            require 'handlers/register.php';
-            break;
-
-        case '/login':
-            require 'handlers/login.php';
-            break;
-
-
-        default:
-            echo json_encode(['error' => 'Invalid API endpoint']);
-            break;
+        // Check if the handler file exists
+    if (file_exists($handlerFilePath)) {
+        require $handlerFilePath;
+    } else {
+        Response::error((['error' => 'Invalid API endpoint', 'route' => $requestUri]));
     }
 } else {
-    echo json_encode(['error' => 'Invalid request method. Only POST is allowed']);
+    Response::error(['error' => 'Invalid request method. Only POST is allowed']);
 }
