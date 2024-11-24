@@ -2,46 +2,32 @@
 namespace blackjack;
 
 use blackjack\Helpers\GameDatabaseHelper;
-use blackjack\Helpers\PlayerDatabaseHelper;
-use Exception;
 
 class Game extends GameDatabaseHelper
 {
-    private PlayerDatabaseHelper $playerDbHelper;
-    private Player $player;
-    private Deck $deck;
-    private \mysqli $conn;
 
-    public function __construct()
+
+    private Deck $deck;
+
+    public function __construct(\mysqli $conn, Deck $deck)
     {
-        parent::__construct();
-        $this->player = new Player();
-        $this->conn = Database::getInstance()->getConnection();
-        $this->playerDbHelper = new PlayerDatabaseHelper();
-        $this->deck = new Deck();
+        parent::__construct($conn);
+        $this->deck = $deck;
+    }
+
+    public function checkIfGameExists(string $gameId): bool
+    {
+        return $this->getGame($gameId);
     }
 
     public function createGame(): void
     {
-        $this->conn->begin_transaction();
-
-        try {
             $gameId = $this->generateGameId();
-            $deck = $this->deck->createDeck();
+            $deck = json_encode($this->deck->createDeck());
             $this->initGame($gameId, $deck);
-            $playersId = $this->playerDbHelper->assignPlayersToGame($gameId);
-            $this->updatePlayerId($gameId, $playersId);
-            if (!$playersId) {
-                Response::error("Failed to assign players to game");
-            }
-
 
             $this->conn->commit();
-            Response::success("Game created successfully", ['game_id' => $gameId, 'players_id' => $playersId]);
-        } catch (Exception $e) {
-            $this->conn->rollback();
-            Response::error($e->getMessage(), 500);
-        }
+            Response::success("Game created successfully", ['game_id' => $gameId]);
     }
 
     private function generateGameId(): string
@@ -54,4 +40,3 @@ class Game extends GameDatabaseHelper
         return $gameId;
     }
 }
-

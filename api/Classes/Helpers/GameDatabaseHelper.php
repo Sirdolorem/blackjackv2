@@ -2,49 +2,37 @@
 
 namespace blackjack\Helpers;
 
-use blackjack\Database;
+use blackjack\Helpers\DbHelper\DbHelper;
 use blackjack\Response;
 
-class GameDatabaseHelper
+abstract class GameDatabaseHelper extends DbHelper
 {
-    private \mysqli $conn;
 
-    public function __construct()
+    abstract public function checkIfGameExists(string $gameId): bool;
+
+    protected function initGame(string $gameId, string $deck): void
     {
-        $this->conn = Database::getInstance()->getConnection();
-    }
+        $query = "INSERT INTO games (game_id, deck) VALUES (?, ?)";
+        $params = [$gameId, $deck];
 
-    public function initGame(string $gameId, array $deck): void
-    {
-        $stmt = $this->conn->prepare("INSERT INTO games (game_id, deck) VALUES (?, ?)");
-        $jsonDeck = json_encode($deck);
-        $stmt->bind_param("ss", $gameId, $jsonDeck);
-
-        if (!$stmt->execute()) {
-            Response::error("Failed to save game");
-        }
-    }
-    public function updatePlayerId(string $gameId, int $playerId)
-    {
-        $stmt = $this->conn->prepare("UPDATE games SET players_id = ? WHERE game_id = ?");
-        $stmt->bind_param("is", $playerId, $gameId);
-
-        if (!$stmt->execute()) {
-            Response::error("Failed update player ID");
+        if (!$this->executeStatement($query, $params)) {
+            Response::error("Failed to initialize game");
         }
     }
 
-    public function checkIfGameExists($gameId): bool
-    {
-        // Prepare the query to check if the game exists
-        $stmt = $this->conn->prepare("SELECT COUNT(*) FROM games WHERE game_id = ?");
 
-        if (!$stmt) {
-            // Error preparing the statement
-            $errorMessage = "Error preparing query: " . $this->conn->error;
-            Response::error($errorMessage);
-            return false; // Return false after handling the error
-        }
-        return true;
+
+    protected function getGame(string $gameId): bool
+    {
+        $query = "SELECT COUNT(*) FROM games WHERE game_id = ?";
+        $params = [$gameId];
+
+        $result = $this->executeStatement($query, $params, true);
+
+        return $result && $result[0]['COUNT(*)'] > 0;
     }
+
+
+
+
 }

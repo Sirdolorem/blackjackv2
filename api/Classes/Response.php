@@ -4,21 +4,83 @@ namespace blackjack;
 class Response
 {
 /**
+* Array of preprogrammed responses.
+*/
+    private static $predefinedResponses = [
+    'game_created' => [
+    'message' => 'Game has been successfully created.',
+    'code' => 201,
+    'action' => 'navigate_to_game'
+    ],
+    'player_joined' => [
+    'message' => 'Player has successfully joined the game.',
+    'code' => 200,
+    'action' => 'update_ui'
+    ],
+    'game_not_found' => [
+    'message' => 'The requested game does not exist.',
+    'code' => 404,
+    'action' => 'show_error_message'
+    ],
+    'invalid_action' => [
+    'message' => 'The action you performed is invalid.',
+    'code' => 400,
+    'action' => 'show_error_message'
+    ],
+    'server_error' => [
+    'message' => 'An unexpected server error occurred.',
+    'code' => 500,
+    'action' => 'show_error_message'
+    ]
+    ];
+
+/**
+* Send a preprogrammed response based on a key.
+*
+* @param string $key The key of the preprogrammed response.
+* @param mixed|null $data Additional data to include in the response.
+* @param string|null $action Override or supplement the action in the response.
+*/
+    public static function staticResponse($key, $data = null, $action = null)
+    {
+        if (!array_key_exists($key, self::$predefinedResponses)) {
+            self::error('Predefined response not found.', 404, 'show_error_message');
+        }
+
+        $responseTemplate = self::$predefinedResponses[$key];
+        $message = $responseTemplate['message'];
+        $code = $responseTemplate['code'];
+        $responseAction = $action ?? $responseTemplate['action'];
+
+        if ($code >= 400) {
+            self::error($message, $code, $responseAction);
+        } else {
+            self::success($message, $data, $responseAction);
+        }
+    }
+
+/**
 * Send a success response.
 *
 * @param mixed $message Success message (string, array, or object).
 * @param mixed|null $data Additional data to include in the response.
+* @param string|null $action Action keyword for the frontend.
 */
-    public static function success($message, $data = null)
+    public static function success($message, $data = null, $action = null)
     {
         $response = [
         'status' => 'success',
-        'message' => is_array($message) || is_object($message) ? $message : ['text' => $message]
+        'message' => is_array($message) || is_object($message) ? $message : ['text' => $message],
         ];
 
         if ($data !== null) {
             $response['data'] = $data;
         }
+
+        if ($action !== null) {
+            $response['action'] = $action;
+        }
+
 
         header('Content-Type: application/json');
         echo json_encode($response);
@@ -30,22 +92,24 @@ class Response
 *
 * @param mixed $message Error message (string, array, or object).
 * @param int $code HTTP status code for the error.
+* @param string|null $action Action keyword for the frontend.
 */
-    public static function error($message, $code = 400)
+    public static function error($message, $code = 400, $action = null)
     {
-    // Set HTTP response code
         http_response_code($code);
 
-    // Prepare the response
         $response = [
         'status' => 'error',
-        'message' => is_array($message) || is_object($message) ? $message : ['text' => $message]
+        'message' => is_array($message) || is_object($message) ? $message : ['text' => $message],
         ];
 
-    // Log the error message
+        if ($action !== null) {
+            $response['action'] = $action;
+        }
+
+
         self::logError($message, $code);
 
-    // Send the JSON response
         header('Content-Type: application/json');
         echo json_encode($response);
         exit;
@@ -65,34 +129,20 @@ class Response
         : $message;
         $logMessage .= PHP_EOL;
 
-    // Append the log to an error log file
         file_put_contents(__DIR__ . '/../logs/error.log', $logMessage, FILE_APPEND);
     }
 
-    /**
-     * Return detailed debug information (e.g., for development purposes).
-     *
-     * @param mixed $data Data to be debugged (can be an object, array, or string).
-     */
+/**
+* Output debug information for the given variables.
+*
+* @param mixed $data The data to be debugged.
+*/
     public static function debug($data)
     {
-        // Check if the data is an object or array and format it accordingly
-        if (is_array($data) || is_object($data)) {
-            $response = [
-                'status' => 'debug',
-                'data' => $data
-            ];
-        } else {
-            // For non-array or object data, wrap it in a string
-            $response = [
-                'status' => 'debug',
-                'data' => ['text' => $data]
-            ];
-        }
-
-        // Send a JSON response
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit;
+    // Output the debug information
+        echo "<pre>";
+        print_r($data);
+        echo "</pre>";
+        exit();
     }
 }

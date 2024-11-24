@@ -1,5 +1,6 @@
 <?php
 
+use blackjack\DependencyManager;
 use blackjack\Response;
 use blackjack\User;
 
@@ -9,7 +10,7 @@ if (isset($data['username']) && isset($data['password'])) {
     $username = $data['username'];
     $password = $data['password'];
 
-    $user = new User();
+    $user = DependencyManager::get(User::class);
 
     $userId = $user->create($username, $password);
 

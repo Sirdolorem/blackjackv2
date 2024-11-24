@@ -3,6 +3,7 @@ namespace blackjack;
 
 class Middleware
 {
+
 // List of routes that should skip the token validation
     protected static $routesWithoutAuth = [
     '/login',
@@ -34,7 +35,7 @@ class Middleware
     {
         foreach (self::$routesWithoutAuth as $noAuthRoute) {
         // Match route exactly or with wildcard (adjust as necessary)
-            if (strpos($route, $noAuthRoute) !== false) {
+            if (str_contains($route, $noAuthRoute)) {
                 return true;  // Skip token validation for this route
             }
         }

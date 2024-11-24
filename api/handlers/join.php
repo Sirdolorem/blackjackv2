@@ -1,10 +1,11 @@
 <?php
 
+use blackjack\DependencyManager;
 use blackjack\Player;
 use blackjack\Response;
 
 $data = json_decode(file_get_contents('php://input'), true);
-$player = new Player();
+$player = DependencyManager::get(Player::class);
 
 if (isset($data['game_id']) && isset($data['user_id'])) {
     $gameId = $data['game_id'];

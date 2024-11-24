@@ -2,32 +2,18 @@
 namespace blackjack;
 
 use blackjack\Helpers\UserDatabaseHelper;
-use blackjack\JWTAuth;
-use blackjack\Response;
 
 class User extends UserDatabaseHelper
 {
     private JWTAuth $jwt;
 
 
-    public function __construct()
+    public function __construct(\Mysqli $conn, JwtAuth $jwt)
     {
-        parent::__construct();
-        $this->jwt = new JWTAuth();
+        parent::__construct($conn);
+        $this->jwt = $jwt;
     }
 
-    private function generateUserId(): string
-    {
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $userId = 'U_'; // Start with 'U_'
-
-    // Generate the next 4 characters
-        for ($i = 0; $i < 4; $i++) {
-            $userId .= $characters[random_int(0, strlen($characters) - 1)];
-        }
-
-        return $userId;
-    }
 
 /**
 * Create a new user if username is unique
@@ -35,7 +21,7 @@ class User extends UserDatabaseHelper
 * @param string $username
 * @param string $password
 */
-    public function create(string $username, string $password)
+    public function create(string $username, string $password): void
     {
         if ($this->getUserByUsername($username)) {
             Response::error(['error' => 'Username already exists']);
@@ -64,7 +50,7 @@ class User extends UserDatabaseHelper
 * @param string $username
 * @param string $password
 */
-    public function login(string $username, string $password)
+    public function login(string $username, string $password): void
     {
         $user = $this->getUserByUsername($username);
 
@@ -122,5 +108,17 @@ class User extends UserDatabaseHelper
         ];
 
         return $this->jwt->generateToken($payload);
+    }
+    private function generateUserId(): string
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $userId = 'U_'; // Start with 'U_'
+
+    // Generate the next 4 characters
+        for ($i = 0; $i < 4; $i++) {
+            $userId .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        return $userId;
     }
 }

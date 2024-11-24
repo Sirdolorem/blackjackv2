@@ -7,7 +7,7 @@ use blackjack\JWTAuth;
 use blackjack\Response;
 
 Middleware::validateToken();
-
+DependencyManager::init();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -23,7 +23,7 @@ $handler = end($parts);
 
 $handlerFilePath = "handlers/$handler.php";
 
-if ($method == 'POST') {
+if ($method == 'POST' || true) {
         // Check if the handler file exists
     if (file_exists($handlerFilePath)) {
         require $handlerFilePath;

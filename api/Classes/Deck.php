@@ -2,21 +2,29 @@
 namespace blackjack;
 
 use blackjack\Helpers\DeckDatabaseHelper;
-use blackjack\Helpers\PlayerDatabaseHelper;
-use Exception;
+
 
 class Deck extends DeckDatabaseHelper
 {
-    private \mysqli $conn;
-    private PlayerDatabaseHelper $PlayerDbHelper;
+    private Player  $player;
 
-
-    public function __construct()
+    public function __construct(\Mysqli $conn, Player $player)
     {
-        parent::__construct();
-        $this->conn = Database::getInstance()->getConnection();
-        $this->PlayerDbHelper = new PlayerDatabaseHelper();
+        parent::__construct($conn);
+        $this->player = $player;
     }
+
+
+    public function getDeck(string $gameId): array
+    {
+        return $this->fetchDeckFromDatabase($gameId);
+    }
+
+    public function updateDeck(string $gameId, array $deck): void
+    {
+        $this->updateDeckInDatabase($gameId, $deck);
+    }
+
 
     public function createDeck(): array
     {
@@ -38,6 +46,15 @@ class Deck extends DeckDatabaseHelper
         return $deck;
     }
 
+    public function checkIfDeckEmpty($deck): bool
+    {
+        if (empty($deck)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private function getCardValue(string $rank): int
     {
         return match ($rank) {
@@ -47,57 +64,29 @@ class Deck extends DeckDatabaseHelper
         };
     }
 
-    public function dealCards(string $gameId, string $playerId, int $numCards)
+    public function dealCards(string $gameId, string $playerId, int $numCards): void
     {
-// Start a transaction to ensure data integrity
-        $this->conn->begin_transaction();
+        $deck = $this->getDeck($gameId);
 
-        try {
-    // Fetch the current deck for the game using the DatabaseHelper
-            $deck = $this->fetchDeck($gameId);
-
-    // Check if there are enough cards to deal
-            if (count($deck) < $numCards) {
-                throw new Exception("Not enough cards in the deck");
-            }
-
-    // Deal the cards
-            $dealtCards = array_splice($deck, 0, $numCards);
-
-    // Update the deck in the database using the DatabaseHelper
-            $this->updateDeck($gameId, $deck);
-
-    // Insert dealt cards into the player's hand using the DatabaseHelper
-            $this->PlayerDbHelper->updatePlayerHand($gameId, $playerId, $dealtCards);
-
-    // Commit the transaction
-            $this->conn->commit();
-
-            return $dealtCards;
-        } catch (Exception $e) {
-    // Roll back the transaction on error
-            $this->conn->rollback();
-            throw $e;
+        if (count($deck) < $numCards) {
+            Response::error("Not enough cards in the deck");
         }
+
+        $dealtCards = array_splice($deck, 0, $numCards);
+
+        $this->updateDeck($gameId, $deck);
+
+        $this->player->updatePlayerHand($playerId, $dealtCards);
     }
 
     public function checkBlackjack($userId): bool
     {
-        $hand = $this->PlayerDbHelper->getPlayerHand($userId);
-        if (count($hand) === 2) {
-            $handStatus = $this->PlayerDbHelper->calculateHandStatus($hand);
+            $handStatus = $this->player->calculateHandStatus($userId);
 
-            if ($handStatus["total"] === 21 && $handStatus["aceCount"] === 1) {
-                return true;
-            }
+        if ($handStatus["total"] === 21 && $handStatus["aceCount"] === 1) {
+            return true;
         }
 
         return false;
     }
-
-//    public function checkBust($userId): bool
-//    {
-//        $status = $this->PlayerDbHelper->calculateHandStatus($userId);
-//        return $status['isBust'];
-//    }
 }

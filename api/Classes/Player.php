@@ -1,19 +1,75 @@
 <?php
 namespace blackjack;
 
-use blackjack\Helpers\GameDatabaseHelper;
 use blackjack\Helpers\PlayerDatabaseHelper;
 
 class Player extends PlayerDatabaseHelper
 {
-    private GameDatabaseHelper $gameDbHelper;
     private Deck $deck;
+    private Game $game;
 
-    public function __construct()
+    public function __construct(\Mysqli $conn, Deck $deck, Game $game)
     {
-        $this->gameDbHelper = new GameDatabaseHelper();
-        $this->deck = new Deck();
-        parent::__construct();
+        $this->deck = $deck;
+        $this->game = $game;
+        parent::__construct($conn);
+    }
+
+    public function getPlayerHand(string $userId): array
+    {
+        return $this->fetchPlayerHand($userId);  // Calls the parent method
+    }
+
+    public function clearPlayerHand(string $userId, string $gameId): bool
+    {
+            return $this->deletePlayerHand($userId, $gameId);
+    }
+
+    // Update a player's hand in the 'users' table
+    public function updatePlayerHand(string $playerId, $hand, bool $overwrite = false): bool
+    {
+        return $this->setPlayerHand($playerId, $hand, $overwrite);  // Calls the parent method
+    }
+
+    // Check if a player is already in a game by their userId and gameId.
+    public function isPlayerInGame(string $userId, string $gameId): bool
+    {
+        return $this->checkIfPlayerAlreadyInGame($userId, $gameId);  // Calls the parent method
+    }
+
+    // Get the list of player IDs for a specific game
+    public function getGamePlayers(string $gameId): array
+    {
+        return $this->fetchGamePlayersId($gameId);  // Calls the parent method
+    }
+
+    // Assign a player to a game in the 'players' table
+    public function assignPlayerToNewGame(string $gameId, string $userId): int
+    {
+        return $this->assignPlayerToGame($gameId, $userId);  // Calls the parent method
+    }
+
+    // Add a player to a specific slot in a game
+    public function placePlayerInSlot(array $players, int $slot, string $userId, string $gameId): bool
+    {
+        return $this->addPlayerToSlot($players, $slot, $userId, $gameId);  // Calls the parent method
+    }
+
+    // Update all players in a game
+    public function updateAllPlayersInGame(array $players, string $gameId): bool
+    {
+        return $this->updatePlayersInGame($players, $gameId);  // Calls the parent method
+    }
+
+    // Get a player's chips from the 'users' table
+    public function getPlayerChips(string $userId): int
+    {
+        return $this->fetchPlayerChips($userId);  // Calls the parent method
+    }
+
+    public function clearPlayerChips(string $userId, string $gameId): bool
+    {
+        return $this->deletePlayerChips($userId, $gameId);
     }
 
     public function getAvailablePlayerSlot(array $players): ?int
@@ -26,6 +82,7 @@ class Player extends PlayerDatabaseHelper
         }
         return null; // No available slot
     }
+
 
     public function calculateHandStatus(string $userId): array
     {
@@ -55,7 +112,7 @@ class Player extends PlayerDatabaseHelper
 
     public function joinGame(string $userId, string $gameId): bool
     {
-        if (!$this->gameDbHelper->checkIfGameExists($gameId)) {
+        if (!$this->game->checkIfGameExists($gameId)) {
             Response::error("Game of id $gameId doesn't exist");
         }
 
@@ -63,14 +120,14 @@ class Player extends PlayerDatabaseHelper
             Response::error("User is already in a game");
         }
 
-        $playersTable = $this->getGamePlayersId($gameId);
+        $playersTable = $this->fetchGamePlayersId($gameId);
         $availableSlot = $this->getAvailablePlayerSlot($playersTable["players_id"]);
 
         if (!$availableSlot) {
             return false;
         }
         $this->clearPlayerHand($userId, $gameId);
-        $this->deck->dealCards($userId, $gameId, 2);
+        $this->deck->dealCards($gameId, $userId, 2);
         $success = $this->addPlayerToSlot($playersTable["players_id"], $availableSlot, $userId, $gameId);
 
         return $success;
@@ -79,7 +136,7 @@ class Player extends PlayerDatabaseHelper
     public function leaveGame(string $userId, string $gameId): bool
     {
         // Check if the game exists
-        if (!$this->gameDbHelper->checkIfGameExists($gameId)) {
+        if (!$this->game->checkIfGameExists($gameId)) {
             Response::error("Game with id $gameId doesn't exist");
             return false;
         }
@@ -91,7 +148,7 @@ class Player extends PlayerDatabaseHelper
         }
 
         // Get the current list of players for the game
-        $playersTable = $this->getGamePlayersId($gameId);
+        $playersTable = $this->fetchGamePlayersId($gameId);
 
         // Check if the user is part of the game and determine the slot
         $slot = $this->findPlayerSlot($playersTable["players_id"], $userId);

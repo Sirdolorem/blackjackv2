@@ -61,6 +61,10 @@ class Database
 
 
     
-    private function __clone() {}
-    public function __wakeup() {}
+    private function __clone()
+    {
+    }
+    public function __wakeup()
+    {
+    }
 }

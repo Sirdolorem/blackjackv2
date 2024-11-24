@@ -2,54 +2,44 @@
 
 namespace blackjack\Helpers;
 
-use blackjack\Database;
+use blackjack\Helpers\DbHelper\DbHelper;
 use blackjack\Response;
 
-class DeckDatabaseHelper
+abstract class DeckDatabaseHelper extends DbHelper
 {
-    private \mysqli $conn;
 
-    public function __construct()
+    // Abstract method to fetch the deck for a specific game
+    abstract public function getDeck(string $gameId): array;
+
+    // Abstract method to update the deck for a specific game
+    abstract public function updateDeck(string $gameId, array $deck): void;
+
+    // Concrete method to fetch the deck from the database
+    protected function fetchDeckFromDatabase(string $gameId): array
     {
-        $this->conn = Database::getInstance()->getConnection();
-    }
+        $query = "SELECT deck FROM games WHERE game_id = ?";
+        $params = [$gameId];
+        $result = $this->executeStatement($query, $params, true);
 
-    public function fetchDeck(string $gameId): array
-    {
-        $stmt = $this->conn->prepare("SELECT deck FROM games WHERE game_id = ?");
-        if (!$stmt) {
-            Response::error("Failed to prepare query: " . $this->conn->error);
-            return [];
-        }
-
-        $stmt->bind_param("s", $gameId);
-        if (!$stmt->execute()) {
-            Response::error("Failed to execute query: " . $stmt->error);
-            return [];
-        }
-        $stmt->bind_result($res);
-        $stmt->fetch();
-        Response::debug(var_export($res, true));
-        if ($res) {
+        if (empty($result)) {
             Response::error("Game not found");
             return [];
         }
 
-        $deck = json_decode($res, true);
+        $deck = json_decode($result[0]['deck'], true);
         if ($deck === null) {
-            Response::error("Invalid deck data");
+            Response::error("Invalid deck data: " . json_last_error_msg());
             return [];
         }
 
         return $deck;
     }
 
-
-    public function updateDeck(string $gameId, array $deck): void
+    // Concrete method to update the deck in the database
+    protected function updateDeckInDatabase(string $gameId, array $deck): void
     {
-        $stmt = $this->conn->prepare("UPDATE games SET deck = ? WHERE game_id = ?");
-        $updatedDeck = json_encode($deck);
-        $stmt->bind_param("ss", $updatedDeck, $gameId);
-        $stmt->execute();
+        $query = "UPDATE games SET deck = ? WHERE game_id = ?";
+        $params = [json_encode($deck), $gameId];
+        $this->executeStatement($query, $params);
     }
 }

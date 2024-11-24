@@ -2,164 +2,132 @@
 
 namespace blackjack\Helpers;
 
-use blackjack\Database;
+use blackjack\Helpers\DbHelper\DbHelper;
 use blackjack\Response;
-use Exception;
 
-class PlayerDatabaseHelper
+abstract class PlayerDatabaseHelper extends DbHelper
 {
+    abstract protected function getPlayerHand(string $userId): array;
+    abstract protected function updatePlayerHand(string $playerId, $hand, bool $overwrite = false): bool;
+    abstract protected function isPlayerInGame(string $userId, string $gameId): bool;
+    abstract protected function getGamePlayers(string $gameId): array;
+    abstract protected function assignPlayerToNewGame(string $gameId, string $userId): int;
+    abstract protected function placePlayerInSlot(array $players, int $slot, string $userId, string $gameId): bool;
+    abstract protected function updateAllPlayersInGame(array $players, string $gameId): bool;
+    abstract protected function getPlayerChips(string $userId): int;
+    abstract protected function clearPlayerHand(string $userId, string $gameId): bool;
+    abstract protected function clearPlayerChips(string $userId, string $gameId): bool;
 
-    private \mysqli $conn;
-
-    public function __construct()
+    /**
+     * Get a player's hand from the 'users' table
+     */
+    protected function fetchPlayerHand(string $userId): array
     {
-        $this->conn = Database::getInstance()->getConnection();
+        $result = $this->executeStatement("SELECT hand FROM users WHERE user_id = ?", [$userId], true);
+        return isset($result[0]['hand']) ? json_decode($result[0]['hand'], true) : [];
     }
-    public function getPlayerHand(string $userId): array
+
+    protected function deletePlayerChips(string $userId, string $gameId): bool
     {
-        $stmt = $this->conn->prepare("SELECT hand FROM users WHERE user_id = ?");
-        $stmt->bind_param("s", $userId);
-        $stmt->execute();
-        $stmt->bind_result($hand);
-        $stmt->fetch();
-        return json_decode($hand, true);
+        $sql = "DELETE FROM bets WHERE game_id = ? AND user_id = ?";
+        $params = [$gameId, $userId];
+
+        // Execute the statement using the existing method
+        if ($this->executeStatement($sql, $params)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-
-
-    public function updatePlayerHand(string $gameId, string $playerId, array $hand): bool
+    /**
+     * Update a player's hand in the 'users' table
+     */
+    protected function setPlayerHand(string $playerId, $hand, bool $overwrite = false): bool
     {
         try {
-            // Convert the hand array to a JSON string
-            $handJson = json_encode($hand);
-
-            // Prepare the SQL query to insert the player's hand
-            $stmt = $this->conn->prepare("UPDATE users SET hand = ? WHERE user_id = ?");
-            $stmt->bind_param("ss", $handJson, $playerId);
-
-            // Execute the statement
-            if (!$stmt->execute()) {
-                Response::error("Failed to insert the player's hand.");
-            }
-
-            return true;
-        } catch (Exception $e) {
-            // Handle any errors
+            $updatedHand = $overwrite ? (is_array($hand) ? $hand : [$hand]) : array_merge($this->getPlayerHand($playerId), $hand);
+            $updatedHandJson = json_encode($updatedHand);
+            return $this->executeStatement("UPDATE users SET hand = ? WHERE user_id = ?", [$updatedHandJson, $playerId]);
+        } catch (\Exception $e) {
             Response::error($e->getMessage());
             return false;
         }
     }
 
-    public function checkIfPlayerAlreadyInGame(string $userId, string $gameId): bool
+    /**
+     * Check if a player is already in a game by their userId and gameId.
+     */
+    protected function checkIfPlayerAlreadyInGame(string $userId, string $gameId): bool
     {
-        // Prepare the query to check if the user is already assigned to any of the player slots
-        $stmt = $this->conn->prepare(
-            "SELECT COUNT(*) FROM players WHERE game_id = ? AND (player_1 = ? OR player_2 = ? OR player_3 = ? OR player_4 = ?)"
-        );
+        $result = $this->executeStatement("SELECT COUNT(*) AS count FROM players WHERE game_id = ? AND user_id = ?", [$gameId, $userId], true);
+        return isset($result[0]['count']) && $result[0]['count'] > 0;
+    }
 
-        if (!$stmt) {
-            // Error preparing the statement
-            $errorMessage = "Error preparing query: " . $this->conn->error;
-            Response::error($errorMessage);
-            return false; // Return false after handling the error
+    /**
+     * Get the list of player IDs for a specific game from the 'players' table
+     */
+    protected function fetchGamePlayersId(string $gameId): array
+    {
+        $result = $this->executeStatement("SELECT user_id FROM players WHERE game_id = ?", [$gameId], true);
+        return array_map(fn($row) => $row['user_id'], $result);
+    }
+
+    /**
+     * Assign a player to a game in the 'players' table
+     */
+    protected function assignPlayerToGame(string $gameId, string $userId): int
+    {
+        if ($this->executeStatement("INSERT INTO players (game_id, user_id) VALUES (?, ?)", [$gameId, $userId])) {
+            return $this->conn->insert_id;
         }
+        return false;
+    }
 
-        // Bind parameters (gameId and userId)
-        $stmt->bind_param("sssss", $gameId, $userId, $userId, $userId, $userId);
+    protected function deletePlayerHand($gameId, $userId): bool
+    {
 
-        if (!$stmt->execute()) {
-            // Error executing the query
-            $errorMessage = "Error executing query: " . $stmt->error;
-            Response::error($errorMessage);
-            return false; // Return false after handling the error
+        $sql = "DELETE FROM hand WHERE game_id = ? AND user_id = ?";
+        $params = [$gameId, $userId];
+
+        // Execute the statement using the existing method
+        if ($this->executeStatement($sql, $params)) {
+            return true;
+        } else {
+            return false;
         }
-
-        // Bind result to check count
-        $stmt->bind_result($count);
-        $stmt->fetch();
-
-        // If count is greater than 0, the user is already in the game
-        return $count > 0;
-    }
-
-    public function getGamePlayersId(string $gameId): array
-    {
-        // Query to get all player IDs in the game
-        $stmt = $this->conn->prepare("SELECT player_1, player_2, player_3, player_4 FROM players WHERE game_id = ?");
-        $stmt->bind_param("s", $gameId);
-        $stmt->execute();
-        $stmt->bind_result($player1, $player2, $player3, $player4);
-        $stmt->fetch();
-
-        return [
-            "players_id" => [
-                $player1,
-                $player2,
-                $player3,
-                $player4
-            ]
-        ];
-    }
-
-    public function assignPlayersToGame(string $gameId): int
-    {
-        $stmt = $this->conn->prepare("INSERT INTO players (game_id) VALUES (?)");
-        $stmt->bind_param("s", $gameId);
-        $stmt->execute();
-        return $stmt->insert_id ?? false;
     }
 
 
-
-    public function addPlayerToSlot(array $players, int $slot, string $userId, $gameId): bool
+    /**
+     * Add a player to a specific slot in a game
+     */
+    protected function addPlayerToSlot(array $players, int $slot, string $userId, string $gameId): bool
     {
-        // Add the user to the available slot
         $players[$slot - 1] = $userId;
-        // Update the players in the database
-        $stmt = $this->conn->prepare("
-            UPDATE players SET player_1 = ?, player_2 = ?, player_3 = ?, player_4 = ? WHERE game_id = ?
-        ");
-        $stmt->bind_param("sssss", $players[0], $players[1], $players[2], $players[3], $gameId);
-        return $stmt->execute();
+        return $this->executeStatement("UPDATE players SET user_id = ? WHERE game_id = ? AND slot = ?", [$userId, $gameId, $slot]);
     }
 
-    protected function clearPlayerHand(string $userId, string $gameId): bool
+    /**
+     * Update all players in a game
+     */
+    protected function updatePlayersInGame(array $players, string $gameId): bool
     {
-        // Clear the player's hand in the database
-        $stmt = $this->conn->prepare("UPDATE users SET hand = ? WHERE user_id = ?");
-        $emptyHand = json_encode([]); // Empty hand represented as an empty array
-        $stmt->bind_param("ss", $emptyHand, $userId);
-
-        // Execute the statement and check if successful
-        if ($stmt->execute()) {
-            return true;
-        } else {
-            // Log an error or handle failure if needed
-            Response::error("Failed to clear player hand.");
-            return false;
+        // Assuming you want to update all players in the game, this might need to be done with multiple queries.
+        foreach ($players as $slot => $userId) {
+            if (!$this->executeStatement("UPDATE players SET user_id = ? WHERE game_id = ? AND slot = ?", [$userId, $gameId, $slot + 1])) {
+                return false;
+            }
         }
+        return true;
     }
 
-
-    public function updatePlayersInGame(array $players, string $gameId): bool
+    /**
+     * Get a player's chips from the 'users' table
+     */
+    protected function fetchPlayerChips(string $userId): int
     {
-        // Prepare the SQL query to update the player slots in the game
-        $stmt = $this->conn->prepare("
-        UPDATE players
-        SET player_1 = ?, player_2 = ?, player_3 = ?, player_4 = ?
-        WHERE game_id = ?
-    ");
-
-        // Bind the parameters: player slots and gameId
-        $stmt->bind_param("sssss", $players[0], $players[1], $players[2], $players[3], $gameId);
-
-        // Execute the query
-        if ($stmt->execute()) {
-            return true;
-        } else {
-            Response::error("Error updating players in game: " . $stmt->error);
-            return false;
-        }
+        $result = $this->executeStatement("SELECT chips FROM users WHERE user_id = ?", [$userId], true);
+        return isset($result[0]['chips']) ? $result[0]['chips'] : 0;
     }
-
 }

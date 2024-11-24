@@ -1,15 +1,12 @@
 <?php
 
+use blackjack\DependencyManager;
 use blackjack\GameActions;
-use blackjack\JWTAuth;
 use blackjack\Response;
-
-
 
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($data['game_id'], $data['user_id'], $data['action'])) {
-    // Use the error method from the Response class
     Response::error('Missing required parameters (game_id, user_id, action)');
     exit();
 }
@@ -17,7 +14,7 @@ if (!isset($data['game_id'], $data['user_id'], $data['action'])) {
 $gameId = $data['game_id'];
 $userId = $data['user_id'];
 $action = strtolower($data['action']);
-$game = new GameActions();
+$game = DependencyManager::get(GameActions::class);
 
 $result = match ($action) {
     'hit' => $game->hit($gameId, $userId),
