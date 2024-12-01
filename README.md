@@ -71,7 +71,7 @@ This API allows users to manage and interact with a game, including user authent
 ### Bets
 | Field     | Type          | Description          |
 | --------- | ------------- | -------------------- |
-| `bet_id`  | int           | Auto-increment ID    |
+| `bet_id`  | int           | Auto-increment ID    | cHUJ
 | `game_id` | varchar(6)    | Associated game ID   |
 | `player_id`| varchar(6)   | Associated player ID |
 | `amount`  | decimal(10,2) | Bet amount           |
