@@ -1,2 +1,4 @@
-/api/vendor/
-/api/.phpdoc/
+api/vendor/
+api/.phpdoc/
+.idea
+api/tools/
