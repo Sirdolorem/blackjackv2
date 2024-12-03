@@ -1,44 +1,78 @@
 <?php
 namespace blackjack;
 
-class Middleware
+class Middleware extends JWTAuth
 {
-
-// List of routes that should skip the token validation
+    // List of routes that should skip the token validation
     protected static $routesWithoutAuth = [
-    '/login',
-    '/register'
+        '/login',
+        '/register'
     ];
 
-    public static function validateToken()
+    /**
+     * Validates the token for the current request.
+     * Skips validation for routes that do not require authentication.
+     *
+     * @throws \Exception If the token is invalid.
+     */
+    public static function validate(): void
     {
-    // Get the current request URI
+
         $requestUri = $_SERVER['REQUEST_URI'];
 
-    // If the current route is in the list of routes without authentication, skip validation
         if (self::isRouteWithoutAuth($requestUri)) {
-            return;  // Skip token validation for this route
+            return;
         }
 
-    // Otherwise, validate the token
+
         $jwt = new JWTAuth();
         try {
-            $jwt->validateToken();  // This will throw an exception if the token is invalid
+            $jwt->validateToken(Middleware::extractTokenFromHeader());
         } catch (\Exception $e) {
             Response::error(['error' => 'Unauthorized', 'message' => $e->getMessage()], 401);
-            exit();  // Stop further execution
+            exit();
         }
     }
 
-// Check if the current route is in the list of routes that should skip authentication
+    /**
+     * Checks if the current route is in the list of routes that should skip authentication.
+     *
+     * @param string $route The current route being accessed.
+     * @return bool Returns true if the route does not require authentication, false otherwise.
+     */
     private static function isRouteWithoutAuth($route)
     {
         foreach (self::$routesWithoutAuth as $noAuthRoute) {
-        // Match route exactly or with wildcard (adjust as necessary)
             if (str_contains($route, $noAuthRoute)) {
-                return true;  // Skip token validation for this route
+                return true;
             }
         }
-        return false;  // Token validation required for this route
+        return false;
+    }
+
+    /**
+     * Extracts the Bearer token from the request headers.
+     *
+     * This function checks the Authorization header and extracts the token from a Bearer scheme.
+     * If the token is not found, it returns an empty string.
+     *
+     * @return string The JWT token extracted from the Authorization header.
+     */
+
+    private static function extractTokenFromHeader(): string
+    {
+        // Get all headers from the request
+        $headers = getallheaders();
+
+        // Get the 'Authorization' header, or an empty string if not present
+        $token = $headers['Authorization'] ?? '';
+
+        // If the Authorization header contains 'Bearer <token>', extract the token
+        if (preg_match('/Bearer\s(\S+)/', $token, $matches)) {
+            return $matches[1]; // Return the token without 'Bearer'
+        }
+
+        // If no token is found, return an empty string
+        return '';
     }
 }

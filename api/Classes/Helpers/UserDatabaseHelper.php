@@ -3,15 +3,15 @@ namespace blackjack\Helpers;
 
 use blackjack\Response;
 use blackjack\Helpers\DbHelper\DbHelper;
-use mysqli_sql_exception;
+use Exception;
 
 abstract class UserDatabaseHelper extends DbHelper
 {
     /**
-     * Get a user by username
+     * Fetches a user from the database by username.
      *
-     * @param string $username
-     * @return array|null The user data or null if not found
+     * @param string $username The username to search for.
+     * @return array|null The user data or null if not found.
      */
     protected function getUserByUsername(string $username): ?array
     {
@@ -33,21 +33,20 @@ abstract class UserDatabaseHelper extends DbHelper
                 return $result->fetch_assoc();
             }
 
-            // No user found
-            return null;
-        } catch (mysqli_sql_exception $e) {
+            return null; // No user found
+        } catch (Exception $e) {
             Response::error("Database error: " . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * Insert a new user into the database
+     * Creates a new user in the database.
      *
-     * @param string $userId
-     * @param string $username
-     * @param string $hashedPassword
-     * @return bool True if the insertion is successful, false otherwise
+     * @param string $userId The unique ID of the user.
+     * @param string $username The username of the user.
+     * @param string $hashedPassword The hashed password of the user.
+     * @return bool True if the user was successfully created, false otherwise.
      */
     protected function createUser(string $userId, string $username, string $hashedPassword): bool
     {

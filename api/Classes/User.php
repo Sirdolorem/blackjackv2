@@ -8,9 +8,9 @@ class User extends UserDatabaseHelper
     private JWTAuth $jwt;
 
 
-    public function __construct(\Mysqli $conn, JwtAuth $jwt)
+    public function __construct(JwtAuth $jwt)
     {
-        parent::__construct($conn);
+        parent::__construct();
         $this->jwt = $jwt;
     }
 
@@ -31,7 +31,6 @@ class User extends UserDatabaseHelper
         $hashedPassword = $this->hashPassword($password);
         $userId = $this->generateUserId();
 
-    // Call the method to create the user
         if ($this->createUser($userId, $username, $hashedPassword)) {
             $user = $this->getUserByUsername($username);
             if ($user) {
@@ -101,8 +100,6 @@ class User extends UserDatabaseHelper
     private function generateUserToken(string $userId, string $username): string
     {
         $payload = [
-        'iat' => time(),
-        'exp' => time() + 3600,
         'user_id' => $userId,
         'username' => $username,
         ];
@@ -114,7 +111,6 @@ class User extends UserDatabaseHelper
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $userId = 'U_'; // Start with 'U_'
 
-    // Generate the next 4 characters
         for ($i = 0; $i < 4; $i++) {
             $userId .= $characters[random_int(0, strlen($characters) - 1)];
         }

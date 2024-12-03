@@ -139,7 +139,6 @@ class Response
 */
     public static function debug($data)
     {
-    // Output the debug information
         echo "<pre>";
         print_r($data);
         echo "</pre>";

@@ -13,6 +13,5 @@ if (isset($data['game_id']) && isset($data['user_id'])) {
 
     $game->leaveGame($userId, $gameId);
 } else {
-    // Error message when the necessary parameters are missing
     Response::error('Missing required parameters: game_id or user_id');
 }

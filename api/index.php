@@ -3,10 +3,12 @@ namespace blackjack;
 
 require_once "autoload.php";
 
-use blackjack\JWTAuth;
-use blackjack\Response;
 
-Middleware::validateToken();
+//ini_set('display_errors', 1);
+//error_reporting(E_ALL);
+//memprof_enable();
+
+Middleware::validate();
 DependencyManager::init();
 
 header('Content-Type: application/json');
@@ -23,8 +25,7 @@ $handler = end($parts);
 
 $handlerFilePath = "handlers/$handler.php";
 
-if ($method == 'POST' || true) {
-        // Check if the handler file exists
+if ($method == 'POST') {
     if (file_exists($handlerFilePath)) {
         require $handlerFilePath;
     } else {

@@ -24,11 +24,9 @@ $result = match ($action) {
     default => ['error' => 'Invalid action'],
 };
 
-// Check if result contains an error or success message
+
 if (isset($result['error'])) {
-    // Use the error method from the Response class
     Response::error($result['error']);
 } else {
-    // Use the success method from the Response class
     Response::success('Action performed successfully', $result);
 }

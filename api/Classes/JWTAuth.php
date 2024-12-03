@@ -1,30 +1,29 @@
 <?php
+
 namespace blackjack;
 
-require_once(__DIR__ . "/../vendor/autoload.php");
-use Dotenv\Dotenv;
+use blackjack\Env;
 use Exception;
-use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT as FirebaseJWT;
-use Firebase\JWT\Key;
 
 class JWTAuth
 {
-    private $secretKey;
-    private $algorithm = 'HS256';
+    private string $secretKey;
+    private string $algorithm = 'HS256';
+    private const ALGORITHMS = [
+        'HS256' => 'sha256',
+    ];
 
     public function __construct()
     {
-        $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-        $dotenv->load();
-
-        $this->secretKey = $_ENV['JWT_SECRET_KEY'];
+        $this->secretKey = Env::get("SECRET_KEY");
     }
 
     /**
-     * Generates a JWTAuth for the given payload.
-     * @param array $payload - The payload data to encode in the token.
-     * @return string - Encoded JWTAuth.
+     * Generates a JWT token.
+     *
+     * @param array $payload The payload to encode.
+     * @return string The encoded JWT token.
+     * @throws Exception If token generation fails.
      */
     public function generateToken(array $payload): string
     {
@@ -33,24 +32,90 @@ class JWTAuth
         $payload['iat'] = $issuedAt;
         $payload['exp'] = $expiration;
 
-        return FirebaseJWT::encode($payload, $this->secretKey, $this->algorithm);
+        $header = [
+            'typ' => 'JWT',
+            'alg' => $this->algorithm,
+        ];
+
+
+        $base64UrlHeader = $this->base64UrlEncode(json_encode($header));
+        $base64UrlPayload = $this->base64UrlEncode(json_encode($payload));
+
+
+        $signature = $this->createSignature($base64UrlHeader, $base64UrlPayload);
+
+        return $base64UrlHeader . '.' . $base64UrlPayload . '.' . $signature;
     }
 
     /**
-     * Decodes and validates a JWTAuth.
-     * @return object|bool - The decoded token payload if valid, false otherwise.
+     * Validates and decodes a JWT token.
+     *
+     * @param string $token The JWT token.
+     * @return object|null The decoded payload if valid, null otherwise.
+     * @throws Exception If the token is invalid or expired.
      */
-    public function validateToken()
+    protected function validateToken(string $token)
     {
-        $headers = getallheaders();
-        $token = $headers['Authorization'] ?? '';
-        $token = str_replace('Bearer ', '', $token);
-        try {
-            return FirebaseJWT::decode($token, new Key($this->secretKey, $this->algorithm));
-        } catch (ExpiredException $e) {
-            Response::error('Token has expired');
-        } catch (Exception $e) {
-            Response::error('Invalid token');
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) {
+            throw new Exception('Invalid token format');
         }
+
+        list($base64UrlHeader, $base64UrlPayload, $signature) = $parts;
+
+
+        $payload = json_decode($this->base64UrlDecode($base64UrlPayload), true);
+        if (!$payload) {
+            throw new Exception('Invalid token payload');
+        }
+
+
+        if (time() >= $payload['exp']) {
+            throw new Exception('Token has expired');
+        }
+
+
+        $expectedSignature = $this->createSignature($base64UrlHeader, $base64UrlPayload);
+        if ($signature !== $expectedSignature) {
+            throw new Exception('Invalid token signature');
+        }
+
+        return (object)$payload;
+    }
+
+    /**
+     * Creates the signature for the JWT.
+     *
+     * @param string $base64UrlHeader The base64 encoded header.
+     * @param string $base64UrlPayload The base64 encoded payload.
+     * @return string The signature.
+     * @throws Exception If signature creation fails.
+     */
+    private function createSignature(string $base64UrlHeader, string $base64UrlPayload): string
+    {
+        $data = $base64UrlHeader . '.' . $base64UrlPayload;
+        return $this->base64UrlEncode(hash_hmac(self::ALGORITHMS[$this->algorithm], $data, $this->secretKey, true));
+    }
+
+    /**
+     * Base64 URL-encodes the given data.
+     *
+     * @param string $data The data to encode.
+     * @return string The base64 URL-safe encoded string.
+     */
+    private function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    /**
+     * Base64 URL-decodes the given data.
+     *
+     * @param string $data The data to decode.
+     * @return string The decoded string.
+     */
+    private function base64UrlDecode(string $data): string
+    {
+        return base64_decode(strtr($data, '-_', '+/'));
     }
 }

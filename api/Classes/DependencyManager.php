@@ -6,6 +6,7 @@ class DependencyManager
 {
     private static array $instances = [];
     private static ?\mysqli $mysqliConnection = null;
+    private static array $resolvingStack = [];
 
     /**
      * Initialize the DependencyManager with a mysqli connection
@@ -24,6 +25,11 @@ class DependencyManager
      */
     public static function get(string $class): object
     {
+
+        if (in_array($class, self::$resolvingStack, true)) {
+            throw new \Exception("Circular dependency detected for class: $class");
+        }
+
         if (!isset(self::$instances[$class])) {
             self::$instances[$class] = self::createInstance($class);
         }
@@ -42,36 +48,29 @@ class DependencyManager
     {
         return match ($class) {
             JWTAuth::class => new JWTAuth(),
-            Game::class => new Game(
-                self::$mysqliConnection,
-                self::get(Deck::class)
-            ),
             Player::class => new Player(
-                self::$mysqliConnection,
-                self::get(Deck::class),
                 self::get(Game::class)
             ),
             Response::class => new Response(),
             User::class => new User(
-                self::$mysqliConnection,
                 self::get(JWTAuth::class)
             ),
+            Game::class => new Game(
+                self::get(Deck::class)
+            ),
             GameActions::class => new GameActions(
-                self::$mysqliConnection,
                 self::get(Deck::class),
-                self::get(Player::class)
+                self::get(Player::class),
+                self::get(ActionCheck::class),
             ),
             Middleware::class => new Middleware(),
             Deck::class => new Deck(
-                self::$mysqliConnection,
-                self::get(Player::class)
+                self::get(Player::class),
             ),
-            Bet::class => new Bet(
-                self::$mysqliConnection
-            ),
+            Bet::class => new Bet(),
             ActionCheck::class => new ActionCheck(
-                self::$mysqliConnection,
-                self::get(Player::class)
+                self::get(Player::class),
+                self::get(Bet::class),
             ),
             default => throw new \Exception("Class $class not recognized in DependencyManager."),
         };

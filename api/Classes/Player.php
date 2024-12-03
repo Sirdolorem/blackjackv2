@@ -5,85 +5,159 @@ use blackjack\Helpers\PlayerDatabaseHelper;
 
 class Player extends PlayerDatabaseHelper
 {
-    private Deck $deck;
-    private Game $game;
 
-    public function __construct(\Mysqli $conn, Deck $deck, Game $game)
+    private Game $game;
+    public function __construct(Game $game)
     {
-        $this->deck = $deck;
         $this->game = $game;
-        parent::__construct($conn);
+        parent::__construct();
     }
 
+
+    /**
+     * Fetches the player's hand from the database.
+     *
+     * @param string $userId The user ID of the player.
+     * @return array The player's hand.
+     */
     public function getPlayerHand(string $userId): array
     {
-        return $this->fetchPlayerHand($userId);  // Calls the parent method
+        return $this->fetchPlayerHand($userId);
     }
 
+    /**
+     * Clears the player's hand from the database.
+     *
+     * @param string $userId The user ID of the player.
+     * @param string $gameId The game ID the player is in.
+     * @return bool True if successful, false otherwise.
+     */
     public function clearPlayerHand(string $userId, string $gameId): bool
     {
-            return $this->deletePlayerHand($userId, $gameId);
+        return $this->deletePlayerHand($userId, $gameId);
     }
 
-    // Update a player's hand in the 'users' table
+    /**
+     * Updates a player's hand in the database.
+     *
+     * @param string $playerId The player ID.
+     * @param mixed $hand The player's hand to update.
+     * @param bool $overwrite Whether to overwrite the existing hand.
+     * @return bool True if successful, false otherwise.
+     */
     public function updatePlayerHand(string $playerId, $hand, bool $overwrite = false): bool
     {
-        return $this->setPlayerHand($playerId, $hand, $overwrite);  // Calls the parent method
+        return $this->setPlayerHand($playerId, $hand, $overwrite);
     }
 
-    // Check if a player is already in a game by their userId and gameId.
+    /**
+     * Checks if a player is already in a game.
+     *
+     * @param string $userId The user ID.
+     * @param string $gameId The game ID.
+     * @return bool True if the player is in the game, false otherwise.
+     */
     public function isPlayerInGame(string $userId, string $gameId): bool
     {
-        return $this->checkIfPlayerAlreadyInGame($userId, $gameId);  // Calls the parent method
+        return $this->checkIfPlayerAlreadyInGame($userId, $gameId);
     }
 
-    // Get the list of player IDs for a specific game
+    /**
+     * Fetches the list of player IDs for a specific game.
+     *
+     * @param string $gameId The game ID.
+     * @return array The list of player IDs.
+     */
     public function getGamePlayers(string $gameId): array
     {
-        return $this->fetchGamePlayersId($gameId);  // Calls the parent method
+        return $this->fetchGamePlayersId($gameId);
     }
 
-    // Assign a player to a game in the 'players' table
+    /**
+     * Assigns a player to a new game.
+     *
+     * @param string $gameId The game ID.
+     * @param string $userId The user ID.
+     * @return int The result of the assignment.
+     */
     public function assignPlayerToNewGame(string $gameId, string $userId): int
     {
-        return $this->assignPlayerToGame($gameId, $userId);  // Calls the parent method
+        return $this->assignPlayerToGame($gameId, $userId);
     }
 
-    // Add a player to a specific slot in a game
+    /**
+     * Places a player in a specific slot in a game.
+     *
+     * @param array $players The list of players.
+     * @param int $slot The slot number.
+     * @param string $userId The user ID.
+     * @param string $gameId The game ID.
+     * @return bool True if successful, false otherwise.
+     */
     public function placePlayerInSlot(array $players, int $slot, string $userId, string $gameId): bool
     {
-        return $this->addPlayerToSlot($players, $slot, $userId, $gameId);  // Calls the parent method
+        return $this->addPlayerToSlot($players, $slot, $userId, $gameId);
     }
 
-    // Update all players in a game
+    /**
+     * Updates all players in a specific game.
+     *
+     * @param array $players The list of players.
+     * @param string $gameId The game ID.
+     * @return bool True if successful, false otherwise.
+     */
     public function updateAllPlayersInGame(array $players, string $gameId): bool
     {
-        return $this->updatePlayersInGame($players, $gameId);  // Calls the parent method
+        return $this->updatePlayersInGame($players, $gameId);
     }
 
-    // Get a player's chips from the 'users' table
+    /**
+     * Gets a player's chips from the database.
+     *
+     * @param string $userId The user ID of the player.
+     * @return int The number of chips the player has.
+     */
     public function getPlayerChips(string $userId): int
     {
-        return $this->fetchPlayerChips($userId);  // Calls the parent method
+        return $this->fetchPlayerChips($userId);
     }
 
+    /**
+     * Clears a player's chips from the database.
+     *
+     * @param string $userId The user ID of the player.
+     * @param string $gameId The game ID the player is in.
+     * @return bool True if successful, false otherwise.
+     */
     public function clearPlayerChips(string $userId, string $gameId): bool
     {
         return $this->deletePlayerChips($userId, $gameId);
     }
 
+    /**
+     * Finds an available player slot in the game.
+     *
+     * @param array $players The list of players.
+     * @return int|null The available slot, or null if none are available.
+     */
     public function getAvailablePlayerSlot(array $players): ?int
     {
-        // Find the first available slot (if any)
         foreach ($players as $index => $player) {
             if (empty($player)) {
                 return $index + 1;
             }
         }
-        return null; // No available slot
+        return null;
     }
 
 
+
+    /**
+     * Calculates the status of a player's hand (e.g., total value, blackjack, bust).
+     *
+     * @param string $userId The user ID of the player.
+     * @return array The calculated hand status.
+     */
     public function calculateHandStatus(string $userId): array
     {
         $hand = $this->getPlayerHand($userId);
@@ -110,6 +184,26 @@ class Player extends PlayerDatabaseHelper
         ];
     }
 
+    /**
+     * Check if a player's hand is a blackjack (21 with an Ace).
+     *
+     * @param string $userId The user ID
+     * @return bool True if the player has a blackjack, false otherwise
+     */
+    public function checkBlackjack(string $userId): bool
+    {
+        $handStatus = $this->calculateHandStatus($userId);
+
+        return $handStatus["total"] === 21 && $handStatus["aceCount"] === 1;
+    }
+
+    /**
+     * Makes the player join a specific game.
+     *
+     * @param string $userId The user ID of the player.
+     * @param string $gameId The game ID the player is joining.
+     * @return bool True if successful, false otherwise.
+     */
     public function joinGame(string $userId, string $gameId): bool
     {
         if (!$this->game->checkIfGameExists($gameId)) {
@@ -127,40 +221,42 @@ class Player extends PlayerDatabaseHelper
             return false;
         }
         $this->clearPlayerHand($userId, $gameId);
-        $this->deck->dealCards($gameId, $userId, 2);
+        $this->dealCards($gameId, $userId, 2);
         $success = $this->addPlayerToSlot($playersTable["players_id"], $availableSlot, $userId, $gameId);
 
         return $success;
     }
 
+    /**
+     * Makes the player leave a specific game.
+     *
+     * @param string $userId The user ID of the player.
+     * @param string $gameId The game ID the player is leaving.
+     * @return bool True if successful, false otherwise.
+     */
     public function leaveGame(string $userId, string $gameId): bool
     {
-        // Check if the game exists
+
         if (!$this->game->checkIfGameExists($gameId)) {
             Response::error("Game with id $gameId doesn't exist");
             return false;
         }
 
-        // Check if the user is in the game
         if (!$this->checkIfPlayerAlreadyInGame($userId, $gameId)) {
             Response::error("User is not in the game");
             return false;
         }
 
-        // Get the current list of players for the game
         $playersTable = $this->fetchGamePlayersId($gameId);
 
-        // Check if the user is part of the game and determine the slot
         $slot = $this->findPlayerSlot($playersTable["players_id"], $userId);
         if ($slot === false) {
             Response::error("User not found in any player slot");
             return false;
         }
 
-        // Remove the player from the game slot
-        $playersTable["players_id"][$slot - 1] = null; // Clear the player from their slot
+        $playersTable["players_id"][$slot - 1] = null;
 
-        // Update the players in the database
         $success = $this->updatePlayersInGame($playersTable["players_id"], $gameId);
 
         if (!$success) {
@@ -168,17 +264,20 @@ class Player extends PlayerDatabaseHelper
             return false;
         }
 
+        //TODO reset player hand etc
 
-        //tbd
-
-        //reset player hand etc
 
         Response::success("User has left the game successfully");
         return true;
     }
 
-
-
+    /**
+     * Finds the slot of a player in the game.
+     *
+     * @param array $players The list of players.
+     * @param string $userId The user ID of the player.
+     * @return int|null The player's slot, or null if not found.
+     */
     private function findPlayerSlot(array $players, string $userId): ?int
     {
         foreach ($players as $index => $player) {

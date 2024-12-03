@@ -2,16 +2,30 @@
 
 namespace blackjack\Helpers\DbHelper;
 
+use blackjack\Database;
 use blackjack\Response;
 
 abstract class DbHelper
 {
     protected \mysqli $conn;
 
-    protected function __construct(\mysqli $conn)
+    /**
+     * Constructor to initialize the database connection.
+     * Establishes a connection to the database using the Database singleton.
+     */
+    protected function __construct()
     {
-        $this->conn = $conn;
+        $this->conn = Database::getInstance()->getConnection();
     }
+
+    /**
+     * Executes an SQL statement with the given parameters.
+     *
+     * @param string $query The SQL query to execute.
+     * @param array $params An array of parameters to bind to the query.
+     * @param bool $getResult Whether to fetch and return the results of the query.
+     * @return mixed The result of the query if $getResult is true, or a boolean indicating success/failure.
+     */
     protected function executeStatement(string $query, array $params = [], bool $getResult = false)
     {
         $stmt = $this->conn->prepare($query);
@@ -20,7 +34,6 @@ abstract class DbHelper
             return false;
         }
 
-        // Dynamically generate the parameter types string
         if (!empty($params)) {
             $types = '';
             foreach ($params as $param) {
@@ -31,9 +44,9 @@ abstract class DbHelper
                 } elseif (is_string($param)) {
                     $types .= 's';
                 } elseif (is_null($param)) {
-                    $types .= 's'; // or 'b' if expecting a blob
+                    $types .= 's';
                 } else {
-                    $types .= 's'; // fallback for unsupported types
+                    $types .= 's';
                 }
             }
             $stmt->bind_param($types, ...$params);
@@ -44,13 +57,11 @@ abstract class DbHelper
             return false;
         }
 
-        // Fetch results if needed
         if ($getResult) {
             $result = $stmt->get_result();
-            return $result ? $result->fetch_all(MYSQLI_ASSOC) : null; // return null instead of empty array
+            return $result ? $result->fetch_all(MYSQLI_ASSOC) : null;
         }
 
         return true;
     }
-
 }

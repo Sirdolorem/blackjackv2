@@ -11,6 +11,5 @@ if (isset($data['username'], $data['password'])) {
 
     $user = DependencyManager::get(User::class);
 
-    // Store the login result in a different variable
     $user->login($username, $password);
 }

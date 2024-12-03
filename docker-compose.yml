@@ -1,0 +1,70 @@
+services:
+  db:
+    image: mysql:latest
+    container_name: lamp_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${PORT_MYSQL}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - lamp_network
+
+  web:
+    image: php:8.1-apache
+    container_name: lamp_web
+    volumes:
+      - ./www:/var/www/html
+    ports:
+      - "${PORT_WEB}:80"
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - lamp_network
+    depends_on:
+      - db
+
+  api:
+    image: php:8.1-apache
+    container_name: lamp_api
+    volumes:
+      - ./api:/var/www/html
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT_API}:80"
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - lamp_network
+    depends_on:
+      - db
+    command: bash -c "apt-get update && apt-get install -y libzip-dev unzip && docker-php-ext-install zip && apache2-foreground"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: lamp_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    ports:
+      - "${PORT_PHPMYADMIN}:80"
+    depends_on:
+      - db
+    networks:
+      - lamp_network
+
+volumes:
+  db_data:
+
+networks:
+  lamp_network:

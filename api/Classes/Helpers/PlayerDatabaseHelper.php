@@ -7,19 +7,101 @@ use blackjack\Response;
 
 abstract class PlayerDatabaseHelper extends DbHelper
 {
+    /**
+     * Fetches the hand of a player from the database.
+     *
+     * @param string $userId The ID of the player.
+     * @return array The player's hand, or an empty array if not found.
+     */
     abstract protected function getPlayerHand(string $userId): array;
+
+    /**
+     * Updates the hand of a player in the database.
+     *
+     * @param string $playerId The ID of the player.
+     * @param mixed $hand The new hand to set.
+     * @param bool $overwrite Whether to overwrite the hand or merge it.
+     * @return bool Returns true if the update was successful, false otherwise.
+     */
     abstract protected function updatePlayerHand(string $playerId, $hand, bool $overwrite = false): bool;
+
+    /**
+     * Checks if a player is part of a game.
+     *
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the player is in the game, false otherwise.
+     */
     abstract protected function isPlayerInGame(string $userId, string $gameId): bool;
+
+    /**
+     * Fetches all players in a game.
+     *
+     * @param string $gameId The ID of the game.
+     * @return array An array of player IDs.
+     */
     abstract protected function getGamePlayers(string $gameId): array;
+
+    /**
+     * Assigns a player to a new game.
+     *
+     * @param string $gameId The ID of the game.
+     * @param string $userId The ID of the player.
+     * @return int The ID of the inserted player record.
+     */
     abstract protected function assignPlayerToNewGame(string $gameId, string $userId): int;
+
+    /**
+     * Places a player in a specific slot in the game.
+     *
+     * @param array $players An array of players.
+     * @param int $slot The slot number.
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the operation was successful, false otherwise.
+     */
     abstract protected function placePlayerInSlot(array $players, int $slot, string $userId, string $gameId): bool;
+
+    /**
+     * Updates all players in a game.
+     *
+     * @param array $players An array of players.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the operation was successful, false otherwise.
+     */
     abstract protected function updateAllPlayersInGame(array $players, string $gameId): bool;
+
+    /**
+     * Fetches the chips of a player from the database.
+     *
+     * @param string $userId The ID of the player.
+     * @return int The number of chips the player has.
+     */
     abstract protected function getPlayerChips(string $userId): int;
+
+    /**
+     * Clears the hand of a player in the database.
+     *
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the operation was successful, false otherwise.
+     */
     abstract protected function clearPlayerHand(string $userId, string $gameId): bool;
+
+    /**
+     * Clears the chips of a player in the database.
+     *
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the operation was successful, false otherwise.
+     */
     abstract protected function clearPlayerChips(string $userId, string $gameId): bool;
 
     /**
-     * Get a player's hand from the 'users' table
+     * Fetches a player's hand from the 'users' table.
+     *
+     * @param string $userId The ID of the player.
+     * @return array The player's hand, or an empty array if not found.
      */
     protected function fetchPlayerHand(string $userId): array
     {
@@ -27,21 +109,27 @@ abstract class PlayerDatabaseHelper extends DbHelper
         return isset($result[0]['hand']) ? json_decode($result[0]['hand'], true) : [];
     }
 
+    /**
+     * Deletes the chips of a player in a specific game.
+     *
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the deletion was successful, false otherwise.
+     */
     protected function deletePlayerChips(string $userId, string $gameId): bool
     {
         $sql = "DELETE FROM bets WHERE game_id = ? AND user_id = ?";
         $params = [$gameId, $userId];
-
-        // Execute the statement using the existing method
-        if ($this->executeStatement($sql, $params)) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->executeStatement($sql, $params);
     }
 
     /**
-     * Update a player's hand in the 'users' table
+     * Updates a player's hand in the 'users' table.
+     *
+     * @param string $playerId The ID of the player.
+     * @param mixed $hand The new hand to set.
+     * @param bool $overwrite Whether to overwrite the hand or merge it.
+     * @return bool Returns true if the update was successful, false otherwise.
      */
     protected function setPlayerHand(string $playerId, $hand, bool $overwrite = false): bool
     {
@@ -56,7 +144,11 @@ abstract class PlayerDatabaseHelper extends DbHelper
     }
 
     /**
-     * Check if a player is already in a game by their userId and gameId.
+     * Checks if a player is already in a game.
+     *
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the player is in the game, false otherwise.
      */
     protected function checkIfPlayerAlreadyInGame(string $userId, string $gameId): bool
     {
@@ -65,7 +157,10 @@ abstract class PlayerDatabaseHelper extends DbHelper
     }
 
     /**
-     * Get the list of player IDs for a specific game from the 'players' table
+     * Fetches the list of player IDs for a specific game from the 'players' table.
+     *
+     * @param string $gameId The ID of the game.
+     * @return array An array of player IDs.
      */
     protected function fetchGamePlayersId(string $gameId): array
     {
@@ -74,7 +169,11 @@ abstract class PlayerDatabaseHelper extends DbHelper
     }
 
     /**
-     * Assign a player to a game in the 'players' table
+     * Assigns a player to a game in the 'players' table.
+     *
+     * @param string $gameId The ID of the game.
+     * @param string $userId The ID of the player.
+     * @return int The ID of the inserted player record.
      */
     protected function assignPlayerToGame(string $gameId, string $userId): int
     {
@@ -84,23 +183,28 @@ abstract class PlayerDatabaseHelper extends DbHelper
         return false;
     }
 
-    protected function deletePlayerHand($gameId, $userId): bool
+    /**
+     * Deletes the hand of a player in a specific game.
+     *
+     * @param string $gameId The ID of the game.
+     * @param string $userId The ID of the player.
+     * @return bool Returns true if the deletion was successful, false otherwise.
+     */
+    protected function deletePlayerHand(string $gameId, string $userId): bool
     {
-
         $sql = "DELETE FROM hand WHERE game_id = ? AND user_id = ?";
         $params = [$gameId, $userId];
-
-        // Execute the statement using the existing method
-        if ($this->executeStatement($sql, $params)) {
-            return true;
-        } else {
-            return false;
-        }
+        return $this->executeStatement($sql, $params);
     }
 
-
     /**
-     * Add a player to a specific slot in a game
+     * Adds a player to a specific slot in a game.
+     *
+     * @param array $players An array of players.
+     * @param int $slot The slot number.
+     * @param string $userId The ID of the player.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the addition was successful, false otherwise.
      */
     protected function addPlayerToSlot(array $players, int $slot, string $userId, string $gameId): bool
     {
@@ -109,11 +213,14 @@ abstract class PlayerDatabaseHelper extends DbHelper
     }
 
     /**
-     * Update all players in a game
+     * Updates all players in a game.
+     *
+     * @param array $players An array of players.
+     * @param string $gameId The ID of the game.
+     * @return bool Returns true if the update was successful, false otherwise.
      */
     protected function updatePlayersInGame(array $players, string $gameId): bool
     {
-        // Assuming you want to update all players in the game, this might need to be done with multiple queries.
         foreach ($players as $slot => $userId) {
             if (!$this->executeStatement("UPDATE players SET user_id = ? WHERE game_id = ? AND slot = ?", [$userId, $gameId, $slot + 1])) {
                 return false;
@@ -123,7 +230,10 @@ abstract class PlayerDatabaseHelper extends DbHelper
     }
 
     /**
-     * Get a player's chips from the 'users' table
+     * Fetches the chips of a player from the 'users' table.
+     *
+     * @param string $userId The ID of the player.
+     * @return int The number of chips the player has.
      */
     protected function fetchPlayerChips(string $userId): int
     {

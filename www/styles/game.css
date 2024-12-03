@@ -1,0 +1,117 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    margin: 0;
+    padding: 0;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
+}
+
+.dealer {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.dealer h3 {
+    font-size: 2em;
+    color: #e74c3c;
+    text-shadow: 0 0 5px #e74c3c, 0 0 10px #e74c3c, 0 0 15px #e74c3c;
+}
+
+.cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.card {
+    width: 70px;
+    height: 100px;
+    border: 3px solid #ecf0f1;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.table-background {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.player, .opponents {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #34495e;
+    border: 2px solid #ecf0f1;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.player h3, .opponent h4 {
+    text-align: center;
+    color: #ecf0f1;
+    font-size: 1.2em;
+}
+
+.player .cards, .opponent .cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.chips {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.chip {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #ecf0f1;
+    border-radius: 50%;
+    background-color: #e74c3c;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.action-button {
+    padding: 12px 24px;
+    margin: 0 10px;
+    background-color: #e74c3c;
+    color: #ecf0f1;
+    border: 2px solid #ecf0f1;
+    border-radius: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.action-button:hover {
+    background-color: #c0392b;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+.action-button:active {
+    transform: scale(0.98);
+}
+
+.opponents {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}

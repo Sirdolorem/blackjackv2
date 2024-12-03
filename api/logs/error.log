@@ -79,3 +79,18 @@
 [2024-11-24 20:43:01] Error 400: Token has expired
 [2024-11-24 20:43:17] Error 400: Token has expired
 [2024-11-24 20:52:07] Error 400: Invalid token
+[2024-11-24 20:04:13] Error 400: Invalid token
+[2024-11-24 21:18:31] Error 400: {"error":"Invalid API endpoint","route":"\/index.php\/create?MEMPROF_PROFILE=dump_on_limit"}
+[2024-11-24 22:07:54] Error 400: Token has expired
+[2024-11-24 22:08:12] Error 400: Token has expired
+[2024-11-24 23:36:08] Error 400: Invalid token
+[2024-11-30 18:16:15] Error 401: {"error":"Unauthorized","message":"Invalid token format"}
+[2024-12-01 19:08:10] Error 401: {"error":"Unauthorized","message":"Invalid token format"}
+[2024-12-01 22:59:27] Error 401: {"error":"Unauthorized","message":"Invalid token format"}
+[2024-12-01 23:54:01] Error 401: {"error":"Unauthorized","message":"Invalid token format"}
+[2024-12-03 17:03:35] Error 401: {"error":"Unauthorized","message":"Invalid token format"}
+[2024-12-03 18:52:34] Error 400: Connection failed: 
+[2024-12-03 18:53:05] Error 400: Connection failed: No such file or directory
+[2024-12-03 18:57:40] Error 400: Connection failed: No such file or directory
+[2024-12-03 18:57:42] Error 400: Connection failed: No such file or directory
+[2024-12-03 18:57:43] Error 400: Connection failed: No such file or directory

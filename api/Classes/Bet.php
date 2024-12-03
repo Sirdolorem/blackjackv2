@@ -6,51 +6,85 @@ use blackjack\Response;
 
 class Bet extends BetDatabaseHelper
 {
-    public function __construct(\mysqli $connection)
+    /**
+     * Bet constructor.
+     */
+    public function __construct()
     {
-        parent::__construct($connection);
+        parent::__construct();
     }
 
-    public function getCurrentBet(string $userId, string $gameId): array|null
+    /**
+     * Get the current bet for a user in a specific game.
+     *
+     * @param string $userId The user ID
+     * @param string $gameId The game ID
+     * @return array|null The current bet data or null if no bet exists
+     */
+    public function getCurrentBet(string $userId, string $gameId): ?array
     {
         return $this->fetchCurrentBet($userId, $gameId);
     }
 
-// Add a bet for the user in a specific game
+    //TODO
+    // withdraw cash
+
+
+    /**
+     * Place a bet for the user in a specific game.
+     *
+     * @param string $userId The user ID
+     * @param string $gameId The game ID
+     * @param int $betAmount The bet amount to be placed
+     * @return bool True if the bet is successfully placed, false otherwise
+     */
     public function placeBet(string $userId, string $gameId, int $betAmount): bool
     {
         if ($betAmount <= 0) {
-            Response::error("Bet amount must be greater than zero.");
             return false;
         }
 
-    // Call the method from BetDatabaseHelper to add the bet
         return $this->insertBet($userId, $gameId, $betAmount);
     }
 
-// Update the user's bet in the game
+    /**
+     * Modify the user's bet in a specific game.
+     *
+     * @param string $userId The user ID
+     * @param string $gameId The game ID
+     * @param int $newBetAmount The new bet amount
+     * @return bool True if the bet is successfully updated, false otherwise
+     */
     public function modifyBet(string $userId, string $gameId, int $newBetAmount): bool
     {
         if ($newBetAmount <= 0) {
-            Response::error("New bet amount must be greater than zero.");
             return false;
         }
 
-    // Call the method from BetDatabaseHelper to update the bet
         return $this->updateBetAmount($userId, $gameId, $newBetAmount);
     }
 
-// Remove the bet for the user in a specific game
+    /**
+     * Delete the user's bet for a specific game.
+     *
+     * @param string $userId The user ID
+     * @param string $gameId The game ID
+     * @return bool True if the bet is successfully deleted, false otherwise
+     */
     public function deleteBet(string $userId, string $gameId): bool
     {
-    // Call the method from BetDatabaseHelper to remove the bet
         return $this->deleteBetForUser($userId, $gameId);
     }
 
-// Double the user's bet in a specific game
+    /**
+     * Double the user's bet in a specific game.
+     *
+     * @param string $userId The user ID
+     * @param string $gameId The game ID
+     * @return bool True if the bet is successfully doubled, false otherwise
+     */
     public function doubleBet(string $userId, string $gameId): bool
     {
-    // Get the current bet data to double it
         $currentBetData = $this->getCurrentBet($userId, $gameId);
 
         if ($currentBetData === null) {
@@ -58,13 +92,11 @@ class Bet extends BetDatabaseHelper
             return false;
         }
 
-    // Check if the bet is already doubled
         if ($currentBetData["is_double"]) {
             Response::error("The bet is already doubled.");
             return false;
         }
 
-    // Call the method from BetDatabaseHelper to update the bet as doubled
         return $this->setDoubleBetFlag($userId, $gameId);
     }
 }

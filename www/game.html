@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles/game.css">
+  <title>Blackjack Game</title>
+</head>
+<body>
+<div class="game-container">
+  <!-- Dealer Section at the Top -->
+  <div class="dealer">
+    <h3>Dealer's Hand</h3>
+    <div class="cards">
+      <!-- Dealer Cards (first one is face down) -->
+      <img src="cards_img/back_card.png" class="card" alt="Card">
+      <img src="cards_img/king_of_diamonds.png" class="card" alt="Card">
+    </div>
+  </div>
+
+  <div class="table-background">
+    <!-- Player Section -->
+    <div class="player">
+      <h3>Your Hand</h3>
+      <div class="cards">
+        <!-- Card cards_img as Placeholders -->
+        <img src="cards_img/2_of_hearts.png" class="card" alt="Card">
+        <img src="cards_img/ace_of_spades.png" class="card" alt="Card">
+      </div>
+      <div class="chips">
+        <h4>Your Bet</h4>
+        <img src="chips/chip_25.png" class="chip" alt="Chip">
+        <img src="chips/chip_10.png" class="chip" alt="Chip">
+      </div>
+      <div class="actions">
+        <button class="action-button hit">Hit</button>
+        <button class="action-button stand">Stand</button>
+      </div>
+    </div>
+
+    <!-- Opponents Section -->
+    <div class="opponents">
+      <div class="opponent">
+        <h4>Opponent 1</h4>
+        <div class="cards">
+          <img src="cards_img/back_card.png" class="card" alt="Card">
+          <img src="cards_img/back_card.png" class="card" alt="Card">
+        </div>
+      </div>
+      <div class="opponent">
+        <h4>Opponent 2</h4>
+        <div class="cards">
+          <img src="cards_img/back_card.png" class="card" alt="Card">
+          <img src="cards_img/back_card.png" class="card" alt="Card">
+        </div>
+      </div>
+      <div class="opponent">
+        <h4>Opponent 3</h4>
+        <div class="cards">
+          <img src="cards_img/back_card.png" class="card" alt="Card">
+          <img src="cards_img/back_card.png" class="card" alt="Card">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+<script type="module" src="js/game.js"></script>
+<script src="js/auth.js"></script>
+</html>
