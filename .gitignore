@@ -2,3 +2,4 @@ api/vendor/
 api/.phpdoc/
 .idea
 api/tools/
+api/tools/phpDocumentor
