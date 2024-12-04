@@ -93,7 +93,6 @@ class GameActions extends GameActionsDatabaseHelper
             return ['error' => 'Split is not allowed'];
         }
 
-        // Update player's hands after split
         foreach ($cards as $card) {
             $this->player->updatePlayerHand($user_id, $card['card'], $game_id);
         }
@@ -145,7 +144,6 @@ class GameActions extends GameActionsDatabaseHelper
             Response::error("Player can't surrender");
         }
 
-        // Log the surrender action
         $this->logAction($game_id, $user_id, 'surrender');
 
         //todo
