@@ -3,7 +3,6 @@ namespace blackjack;
 
 class Middleware extends JWTAuth
 {
-    // List of routes that should skip the token validation
     protected static $routesWithoutAuth = [
         '/login',
         '/register'
@@ -61,18 +60,13 @@ class Middleware extends JWTAuth
 
     private static function extractTokenFromHeader(): string
     {
-        // Get all headers from the request
         $headers = getallheaders();
 
-        // Get the 'Authorization' header, or an empty string if not present
         $token = $headers['Authorization'] ?? '';
 
-        // If the Authorization header contains 'Bearer <token>', extract the token
         if (preg_match('/Bearer\s(\S+)/', $token, $matches)) {
-            return $matches[1]; // Return the token without 'Bearer'
+            return $matches[1];
         }
-
-        // If no token is found, return an empty string
         return '';
     }
 }
