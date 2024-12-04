@@ -60,10 +60,8 @@ class Game extends GameDatabaseHelper
         $gameId = $this->generateGameId();
         $deck = json_encode($this->deck->createDeck());
 
-        // Initialize the game with the generated game ID and deck
         $this->initGame($gameId, $deck);
 
-        // Commit the transaction
         $this->conn->commit();
 
         return $gameId;
