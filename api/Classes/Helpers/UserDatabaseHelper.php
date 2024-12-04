@@ -33,7 +33,7 @@ abstract class UserDatabaseHelper extends DbHelper
                 return $result->fetch_assoc();
             }
 
-            return null; // No user found
+            return null;
         } catch (Exception $e) {
             Response::error("Database error: " . $e->getMessage());
             return null;
@@ -78,12 +78,10 @@ abstract class UserDatabaseHelper extends DbHelper
      */
     public function fetchUserChips(string $userId): int
     {
-        // Fetch the user's chip balance from the users table
         $query = "SELECT chips FROM users WHERE user_id = ?";
         $result = $this->executeStatement($query, [$userId], true);
 
-        // If the user exists, return the chips value, otherwise return 0
-        return $result[0]['chips'] ?? 0; // Default to 0 if no result
+        return $result[0]['chips'] ?? 0;
     }
 
     /**
@@ -95,7 +93,6 @@ abstract class UserDatabaseHelper extends DbHelper
      */
     public function updateUserChips(string $userId, int $newChipBalance): bool
     {
-        // Update the user's chip balance in the database
         $query = "UPDATE users SET chips = ? WHERE user_id = ?";
         return $this->executeStatement($query, [$newChipBalance, $userId]);
     }
