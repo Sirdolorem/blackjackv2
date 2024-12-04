@@ -4,12 +4,10 @@ export class API {
         this.token = null;
     }
 
-    // Set JWT token for authenticated requests
     setToken(token) {
         this.token = token;
     }
 
-    // Utility to handle API calls with authentication
     async request(endpoint, method = 'POST', data = null) {
         const headers = {
             'Content-Type': 'application/json',
