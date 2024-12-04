@@ -1,6 +1,6 @@
 class DependencyManager {
-    static instances = {}; // To hold instances of classes
-    static resolvingStack = []; // To prevent circular dependencies
+    static instances = {};
+    static resolvingStack = [];
 
     /**
      * Register a class in the manager
