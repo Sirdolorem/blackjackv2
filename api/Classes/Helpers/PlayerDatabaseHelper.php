@@ -193,7 +193,6 @@ abstract class PlayerDatabaseHelper extends DbHelper
 
             $updatedHandJson = json_encode($currentHand, true);
 
-            // Update if the hand exists, otherwise insert
             if (!$isCurrentHandEmpty) {
                 return $this->executeStatement(
                     "UPDATE hands SET hand = ? WHERE user_id = ?",
