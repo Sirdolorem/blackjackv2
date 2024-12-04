@@ -7,52 +7,215 @@ class ActionCheck extends ActionCheckDatabaseHelper
 {
     private Player $player;
     private Bet $bet;
+    private Deck $deck;
+    private Game $game;
 
-    /**
-     * Constructor to initialize player and bet objects
-     *
-     * @param Player $player The player object
-     * @param Bet $bet The bet object
-     */
-    public function __construct(Player $player, Bet $bet)
+    public function __construct(Player $player, Bet $bet, Deck $deck, Game $game)
     {
         $this->player = $player;
         $this->bet = $bet;
+        $this->deck = $deck;
+        $this->game = $game;
         parent::__construct();
     }
 
     /**
-     * Get the active player ID for a game.
+     * Common Game Status Check.
      *
-     * @param string $gameId The game ID
-     * @return string The active player ID
+     * @param string $gameId The ID of the game being checked.
+     *
+     * @return bool Returns true if the game is active, false otherwise.
      */
-    public function getActivePlayerId(string $gameId):string
+    private function isGameActive(string $gameId): bool
     {
-        return $this->fetchActivePlayerId($gameId);
+        return $this->game->checkGameStatus($gameId) == "active";
     }
 
     /**
-     * Check if it's the player's turn to play.
+     * Common Player Turn Check.
      *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if it's the player's turn, false otherwise
+     * @param string $userId The ID of the player whose turn is being checked.
+     * @param string $gameId The ID of the game where the turn is being checked.
+     *
+     * @return bool Returns true if it's the given user's turn in the specified game, false otherwise.
      */
-    private function isPlayerTurn(string $userId, string $gameId): bool
+    public function isPlayerTurn(string $userId, string $gameId): bool
     {
-        $playerId = $this->getActivePlayerId($gameId);
-        if ($userId !== $playerId) {
+        return $userId === $this->getActivePlayerId($gameId);
+    }
+
+    /**
+     * Validates common conditions for all actions.
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     * @param string $actionType The type of action being validated (e.g., 'hit', 'stand').
+     *
+     * @return bool Returns true if all common conditions are satisfied
+     * (e.g., game is active, player’s turn, valid bet, non-empty deck).
+     * Returns false if any of the conditions fail.
+     */
+    private function validateCommonConditions(string $userId, string $gameId, string $actionType): bool
+    {
+        if (!$this->isGameActive($gameId)) {
             return false;
         }
+
+        if (!$this->isPlayerTurn($userId, $gameId)) {
+            return false;
+        }
+
+        if (!$this->bet->getCurrentBet($userId, $gameId)) {
+            return false;
+        }
+
+        if ($this->deck->checkIfDeckEmpty($gameId)) {
+            return false;
+        }
+
+        if ($actionType == 'hit' || $actionType == 'double') {
+            if (!$this->isHandAbove21($userId)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
     /**
-     * Get the total value of a player's hand.
+     * Returns whether the hand total is greater than or equal to 21.
      *
-     * @param string $userId The user ID
-     * @return int The total value of the player's hand
+     * @param string $userId The ID of the player whose hand total is being checked.
+     *
+     * @return bool Returns true if the player's hand total is >= 21, false otherwise.
+     */
+    private function isHandAbove21(string $userId): bool
+    {
+        return $this->getHandTotal($userId) >= 21;
+    }
+
+    /**
+     * Determines if the player can "hit".
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     *
+     * @return bool Returns true if the player can hit (all conditions met), false otherwise.
+     */
+    public function canHit(string $userId, string $gameId): bool
+    {
+        if (!$this->validateCommonConditions($userId, $gameId, 'hit')) {
+            return false;
+        }
+
+        if ($this->lastPlayerAction($userId) == "stand" || $this->lastPlayerAction($userId) == "split") {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Determines if the player can "stand".
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     *
+     * @return bool Returns true if the player can stand (all conditions met), false otherwise.
+     */
+    public function canStand(string $userId, string $gameId): bool
+    {
+        return $this->validateCommonConditions($userId, $gameId, 'stand');
+    }
+
+    /**
+     * Determines if the player can "double".
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     *
+     * @return bool Returns true if the player can double (all conditions met), false otherwise.
+     */
+    public function canDouble(string $userId, string $gameId): bool
+    {
+        if (!$this->validateCommonConditions($userId, $gameId, 'double')) {
+            return false;
+        }
+
+        $playerChips = $this->player->getPlayerChips($userId);
+        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
+        if ($playerChips < $currentBet * 2) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Determines if the player can "split".
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     *
+     * @return bool Returns true if the player can split (all conditions met), false otherwise.
+     */
+    public function canSplit(string $userId, string $gameId): bool
+    {
+        if (!$this->validateCommonConditions($userId, $gameId, 'split')) {
+            return false;
+        }
+
+        $hand = $this->player->getPlayerHand($userId);
+        $playerChips = $this->player->getPlayerChips($userId);
+        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
+
+        return count($hand) === 2 && $hand[0]['rank'] === $hand[1]['rank'] && $playerChips >= $currentBet * 2;
+    }
+
+    /**
+     * Determines if the player can "surrender".
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     *
+     * @return bool Returns true if the player can surrender (all conditions met), false otherwise.
+     */
+    public function canSurrender(string $userId, string $gameId): bool
+    {
+        if (!$this->validateCommonConditions($userId, $gameId, 'surrender')) {
+            return false;
+        }
+
+        $playerChips = $this->player->getPlayerChips($userId);
+        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
+        return $this->getHandTotal($userId) < 21 && $playerChips >= $currentBet / 2;
+    }
+
+    /**
+     * Determines if the player can take "insurance".
+     *
+     * @param string $userId The ID of the player performing the action.
+     * @param string $gameId The ID of the game where the action is being performed.
+     *
+     * @return bool Returns true if the player can take insurance (all conditions met), false otherwise.
+     */
+    public function canTakeInsurance(string $userId, string $gameId): bool
+    {
+        if (!$this->validateCommonConditions($userId, $gameId, 'insurance')) {
+            return false;
+        }
+
+        $playerChips = $this->player->getPlayerChips($userId);
+        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
+        return $playerChips >= $currentBet / 2;
+    }
+
+    /**
+     * Gets the total value of the player's hand.
+     *
+     * @param string $userId The ID of the player whose hand total is being calculated.
+     *
+     * @return int The total value of the player's hand.
      */
     private function getHandTotal(string $userId): int
     {
@@ -61,142 +224,26 @@ class ActionCheck extends ActionCheckDatabaseHelper
     }
 
     /**
-     * Get the player's current chip count.
+     * Fetches the last action performed by the player.
      *
-     * @param string $userId The user ID
-     * @return int The player's chip count
+     * @param string $userId The ID of the player whose last action is being fetched.
+     *
+     * @return string The last action performed by the player (e.g., "hit", "stand").
      */
-    private function getPlayerChips(string $userId): int
+    public function lastPlayerAction(string $userId): string
     {
-        return $this->player->getPlayerChips($userId);
+        return $this->fetchLastPlayerAction($userId);
     }
 
     /**
-     * Check if a player can hit.
+     * Fetches the active player ID for the given game.
      *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if the player can hit, false otherwise
-     */
-    public function canHit($userId, $gameId): bool
-    {
-        if (!$this->isPlayerTurn($userId, $gameId)) {
-            return false;
-        }
-
-        $handTotal = $this->getHandTotal($userId);
-
-        if ($handTotal >= 21) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Check if a player can stand.
+     * @param string $gameId The ID of the game whose active player ID is being fetched.
      *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if the player can stand, false otherwise
+     * @return string The ID of the active player in the game.
      */
-    public function canStand($userId, $gameId): bool
+    protected function getActivePlayerId(string $gameId): string
     {
-        return $this->isPlayerTurn($userId, $gameId);
-    }
-
-    /**
-     * Check if a player can double their bet.
-     *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if the player can double, false otherwise
-     */
-    public function canDouble($userId, $gameId): bool
-    {
-        if (!$this->isPlayerTurn($userId, $gameId)) {
-            return false;
-        }
-
-        $handTotal = $this->getHandTotal($userId);
-        $playerChips = $this->getPlayerChips($userId);
-        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
-
-        if (in_array($handTotal, [9, 10, 11]) && $playerChips >= $currentBet * 2) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if a player can split their hand.
-     *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if the player can split, false otherwise
-     */
-    public function canSplit($userId, $gameId)
-    {
-        if (!$this->isPlayerTurn($userId, $gameId)) {
-            return false;
-        }
-
-        $hand = $this->player->getPlayerHand($userId);
-        $playerChips = $this->getPlayerChips($userId);
-        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
-
-        if (count($hand) === 2 && $hand[0]['rank'] === $hand[1]['rank'] && $playerChips >= $currentBet) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if a player can surrender.
-     *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if the player can surrender, false otherwise
-     */
-    public function canSurrender($userId, $gameId): bool
-    {
-        if (!$this->isPlayerTurn($userId, $gameId)) {
-            return false;
-        }
-
-        $handTotal = $this->getHandTotal($userId);
-        $playerChips = $this->getPlayerChips($userId);
-        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
-
-        if (in_array($handTotal, [15, 16, 17]) && $playerChips >= $currentBet / 2) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if a player can take insurance.
-     *
-     * @param string $userId The user ID
-     * @param string $gameId The game ID
-     * @return bool True if the player can take insurance, false otherwise
-     */
-    public function canTakeInsurance($userId, $gameId): bool
-    {
-        if (!$this->isPlayerTurn($userId, $gameId)) {
-            return false;
-        }
-
-        $playerChips = $this->getPlayerChips($userId);
-        $currentBet = $this->bet->getCurrentBet($userId, $gameId);
-
-        if ($playerChips >= $currentBet / 2) {
-            return true;
-        }
-
-        return false;
+        return $this->fetchActivePlayerId($gameId);
     }
 }

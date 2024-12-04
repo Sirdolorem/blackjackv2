@@ -94,3 +94,52 @@
 [2024-12-03 18:57:40] Error 400: Connection failed: No such file or directory
 [2024-12-03 18:57:42] Error 400: Connection failed: No such file or directory
 [2024-12-03 18:57:43] Error 400: Connection failed: No such file or directory
+[2024-12-03 19:27:27] Error 400: Connection failed: No such file or directory
+[2024-12-03 19:32:17] Error 400: Connection failed: No such file or directory
+[2024-12-03 19:40:47] Error 400: Connection failed: Access denied for user 'blackjack'@'172.19.0.5' (using password: NO)
+[2024-12-03 19:42:20] Error 400: Connection failed: Access denied for user 'blackjack'@'172.19.0.5' (using password: NO)
+[2024-12-03 19:42:21] Error 400: Connection failed: Access denied for user 'blackjack'@'172.19.0.5' (using password: NO)
+[2024-12-03 19:42:32] Error 400: /var/www/html/../.env
+[2024-12-03 19:42:43] Error 400: /var/www/html/.env
+[2024-12-03 19:55:00] Error 400: /var/www/html/.env
+[2024-12-03 19:55:49] Error 400: Env file not found
+[2024-12-03 19:56:04] Error 400: {"error":"User not found"}
+[2024-12-03 19:56:32] Error 401: {"error":"Unauthorized","message":"Token has expired"}
+[2024-12-03 20:19:05] Error 401: {"error":"Unauthorized","message":"Invalid token signature"}
+[2024-12-03 20:22:59] Error 400: 
+[2024-12-03 20:30:21] Error 400: Unable to join the game
+[2024-12-03 20:48:17] Error 400: User is already in a game
+[2024-12-03 21:06:57] Error 400: User is already in a game
+[2024-12-03 21:09:28] Error 400: User is already in a game
+[2024-12-03 21:16:23] Error 400: User is already in a game
+[2024-12-03 21:17:48] Error 400: User is already in a game
+[2024-12-03 21:19:10] Error 401: {"error":"Unauthorized","message":"Token has expired"}
+[2024-12-03 21:19:49] Error 400: User is already in a game
+[2024-12-03 21:21:42] Error 400: User is already in a game
+[2024-12-03 21:28:10] Error 400: User is already in a game
+[2024-12-03 21:30:11] Error 400: User is already in a game
+[2024-12-03 21:33:19] Error 400: User is already in a game
+[2024-12-03 21:34:54] Error 400: User is already in a game
+[2024-12-03 21:35:45] Error 400: User is already in a game
+[2024-12-03 21:59:55] Error 400: Field 'game_id' doesn't have a default value
+[2024-12-03 22:08:01] Error 400: Deck is empty
+[2024-12-03 22:16:05] Error 400: Player can't hit
+[2024-12-03 22:16:07] Error 400: Player can't hit
+[2024-12-03 22:16:11] Error 400: {"error":"User not found"}
+[2024-12-03 22:17:10] Error 400: Column count doesn't match value count at row 1
+[2024-12-03 23:17:51] Error 401: {"error":"Unauthorized","message":"Token has expired"}
+[2024-12-03 23:20:16] Error 400: Deck is empty
+[2024-12-03 23:30:38] Error 400: Player can't hit
+[2024-12-03 23:30:42] Error 400: Player can't hit
+[2024-12-03 23:32:28] Error 400: Player can't hit
+[2024-12-03 23:33:27] Error 400: Player can't split
+[2024-12-03 23:34:33] Error 400: Player can't double
+[2024-12-03 23:44:39] Error 400: Missing required parameters (game_id, user_id, action, bet_amount)
+[2024-12-03 23:51:55] Error 400: The bet is already doubled.
+[2024-12-03 23:52:06] Error 400: No bet found to double.
+[2024-12-03 23:52:17] Error 400: Invalid action
+[2024-12-03 23:52:39] Error 400: The bet is already doubled.
+[2024-12-03 23:53:12] Error 400: Invalid action
+[2024-12-04 00:42:51] Error 400: {"error":"User not found"}
+[2024-12-04 00:43:30] Error 401: {"error":"Unauthorized","message":"Token has expired"}
+[2024-12-04 00:43:39] Error 401: {"error":"Unauthorized","message":"Invalid token format"}

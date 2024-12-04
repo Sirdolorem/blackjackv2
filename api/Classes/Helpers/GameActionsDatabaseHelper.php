@@ -16,7 +16,7 @@ abstract class GameActionsDatabaseHelper extends DbHelper
      * @param string|null $card The card associated with the action (optional).
      * @return bool Returns true if the action is logged successfully, false otherwise.
      */
-    protected function logAction($game_id, $user_id, $action, $card = null)
+    protected function logAction(string $game_id, string $user_id, string $action, ?string $card = null): bool
     {
         $query = ($card === null)
             ? "INSERT INTO actions (game_id, user_id, action) VALUES (?, ?, ?)"
@@ -28,4 +28,5 @@ abstract class GameActionsDatabaseHelper extends DbHelper
 
         return $this->executeStatement($query, $params);
     }
+
 }

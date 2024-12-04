@@ -43,11 +43,12 @@ class Player extends PlayerDatabaseHelper
      * @param string $playerId The player ID.
      * @param mixed $hand The player's hand to update.
      * @param bool $overwrite Whether to overwrite the existing hand.
+     * @param string $gameId Game ID.
      * @return bool True if successful, false otherwise.
      */
-    public function updatePlayerHand(string $playerId, $hand, bool $overwrite = false): bool
+    public function updatePlayerHand(string $playerId, array $hand, string $gameId, bool $overwrite = false): bool
     {
-        return $this->setPlayerHand($playerId, $hand, $overwrite);
+        return $this->setOrUpdatePlayerHand($playerId, $hand, $gameId, $overwrite);
     }
 
     /**
@@ -99,6 +100,8 @@ class Player extends PlayerDatabaseHelper
         return $this->addPlayerToSlot($players, $slot, $userId, $gameId);
     }
 
+
+
     /**
      * Updates all players in a specific game.
      *
@@ -109,6 +112,29 @@ class Player extends PlayerDatabaseHelper
     public function updateAllPlayersInGame(array $players, string $gameId): bool
     {
         return $this->updatePlayersInGame($players, $gameId);
+    }
+
+    /**
+     * Check if the active user is set for a given game.
+     *
+     * @param string $gameId The game ID to check.
+     * @return bool Returns true if an active user is set, false otherwise.
+     */
+    public function isActiveUserSet(string $gameId): bool
+    {
+        return $this->selectActiveUser($gameId);
+    }
+
+    /**
+     * Set the active user for a given game.
+     *
+     * @param string $gameId The game ID to update.
+     * @param string $userId The user ID to set as active.
+     * @return bool Returns true if the active user was successfully set, false otherwise.
+     */
+    public function setActiveUser(string $gameId, string $userId): bool
+    {
+        return $this->updateActiveUser($gameId, $userId);
     }
 
     /**
@@ -134,6 +160,8 @@ class Player extends PlayerDatabaseHelper
         return $this->deletePlayerChips($userId, $gameId);
     }
 
+
+
     /**
      * Finds an available player slot in the game.
      *
@@ -142,6 +170,9 @@ class Player extends PlayerDatabaseHelper
      */
     public function getAvailablePlayerSlot(array $players): ?int
     {
+        if (empty($players)) {
+            return 1;
+        }
         foreach ($players as $index => $player) {
             if (empty($player)) {
                 return $index + 1;
@@ -161,6 +192,11 @@ class Player extends PlayerDatabaseHelper
     public function calculateHandStatus(string $userId): array
     {
         $hand = $this->getPlayerHand($userId);
+
+        if (isset($hand['rank'], $hand['value'])) {
+            $hand = [$hand];
+        }
+
 
         $totalValue = 0;
         $aceCount = 0;
@@ -215,16 +251,12 @@ class Player extends PlayerDatabaseHelper
         }
 
         $playersTable = $this->fetchGamePlayersId($gameId);
-        $availableSlot = $this->getAvailablePlayerSlot($playersTable["players_id"]);
-
+        $availableSlot = $this->getAvailablePlayerSlot($playersTable);
         if (!$availableSlot) {
             return false;
         }
         $this->clearPlayerHand($userId, $gameId);
-        $this->dealCards($gameId, $userId, 2);
-        $success = $this->addPlayerToSlot($playersTable["players_id"], $availableSlot, $userId, $gameId);
-
-        return $success;
+        return $this->addPlayerToSlot($availableSlot, $userId, $gameId);
     }
 
     /**

@@ -24,9 +24,10 @@ abstract class DbHelper
      * @param string $query The SQL query to execute.
      * @param array $params An array of parameters to bind to the query.
      * @param bool $getResult Whether to fetch and return the results of the query.
+     * @param bool $returnStmt Return stmt for debugging purpose.
      * @return mixed The result of the query if $getResult is true, or a boolean indicating success/failure.
      */
-    protected function executeStatement(string $query, array $params = [], bool $getResult = false)
+    protected function executeStatement(string $query, array $params = [], bool $getResult = false, bool $returnStmt = false)
     {
         $stmt = $this->conn->prepare($query);
         if ($stmt === false) {
@@ -60,6 +61,10 @@ abstract class DbHelper
         if ($getResult) {
             $result = $stmt->get_result();
             return $result ? $result->fetch_all(MYSQLI_ASSOC) : null;
+        }
+
+        if ($returnStmt) {
+            return $stmt;
         }
 
         return true;

@@ -47,4 +47,19 @@ abstract class GameDatabaseHelper extends DbHelper
 
         return $result && $result[0]['COUNT(*)'] > 0;
     }
+
+    /**
+     * Fetch the status of a game from the database.
+     *
+     * @param string $gameId The ID of the game to fetch the status for
+     * @return string|null The status of the game, or null if not found
+     */
+    protected function fetchGameStatus(string $gameId): ?string
+    {
+        $query = "SELECT status FROM games WHERE game_id = ?";
+        $result = $this->executeStatement($query, [$gameId], true);
+
+        return $result[0]['status'] ?? null;
+    }
+
 }

@@ -18,9 +18,9 @@ $betAmount = (int) $data['bet_amount'];
 $bet = DependencyManager::get(Bet::class);
 
 $result = match ($action) {
-    'add' => $bet->addBet($userId, $gameId, $betAmount),
-    'update' => $bet->updateBet($userId, $gameId, $betAmount),
-    'remove' => $bet->removeBet($userId, $gameId),
+    'add' => $bet->placeBet($userId, $gameId, $betAmount),
+    'update' => $bet->modifyBet($userId, $gameId, $betAmount),
+    'remove' => $bet->deleteBet($userId, $gameId),
     'double' => $bet->doubleBet($userId, $gameId),
     default => ['error' => 'Invalid action'],
 };

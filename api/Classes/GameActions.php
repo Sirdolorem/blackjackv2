@@ -7,6 +7,7 @@ class GameActions extends GameActionsDatabaseHelper
 {
     private Deck $deck;
     private Player $player;
+    private Bet $bet;
 
     private ActionCheck $actionCheck;
 
@@ -17,10 +18,11 @@ class GameActions extends GameActionsDatabaseHelper
      * @param Deck $deck The Deck object
      * @param Player $player The Player object
      */
-    public function __construct(Deck $deck, Player $player, ActionCheck $actionCheck)
+    public function __construct(Deck $deck, Player $player, ActionCheck $actionCheck, Bet $bet)
     {
         $this->deck = $deck;
         $this->player = $player;
+        $this->bet = $bet;
         $this->actionCheck = $actionCheck;
         parent::__construct();
     }
@@ -33,22 +35,22 @@ class GameActions extends GameActionsDatabaseHelper
      * @param string $user_id The user ID
      * @return array The card drawn and any related status
      */
-    public function hit($game_id, $user_id): array
+    public function hit(string $game_id, string $user_id): array
     {
         if (!$this->actionCheck->canHit($user_id, $game_id)) {
             Response::error("Player can't hit");
         }
+
         $deck = $this->deck->getDeck($game_id);
+
         if ($this->deck->checkIfDeckEmpty($deck)) {
             Response::error("Deck is empty");
         }
         $card = array_shift($deck);
 
-        // Update the deck and player hand
         $this->deck->updateDeck($game_id, $deck);
-        $this->player->updatePlayerHand($game_id, $user_id, $card);
-        $this->logAction($game_id, $user_id, $card, 'Hit');
-
+        $this->player->updatePlayerHand($user_id, $card, $game_id);
+        $this->logAction($game_id, $user_id, json_encode($card), 'Hit');
         return ['card' => $card];
     }
 
@@ -93,7 +95,7 @@ class GameActions extends GameActionsDatabaseHelper
 
         // Update player's hands after split
         foreach ($cards as $card) {
-            $this->player->updatePlayerHand($game_id, $user_id, $card['card']);
+            $this->player->updatePlayerHand($user_id, $card['card'], $game_id);
         }
 
         return ['status' => 'Player has split their hand'];
@@ -119,9 +121,37 @@ class GameActions extends GameActionsDatabaseHelper
 
         $card = array_shift($deck);
         $this->deck->updateDeck($game_id, $deck);
-        $this->player->updatePlayerHand($game_id, $user_id, $card);
+        $this->player->updatePlayerHand($user_id, $card, $game_id);
         $this->logAction($game_id, $user_id, $card, 'double');
 
-        return ['card' => $card, 'status' => 'Bet doubled and one card dealt'];
+        if ($this->bet->doubleBet($user_id, $game_id)) {
+            return ['card' => $card, 'status' => 'Bet doubled and one card dealt'];
+        } else {
+            return ['error' => 'Failed to double the bet'];
+        }
+    }
+
+    /**
+     * Handles the action of surrendering the game.
+     * The player forfeits half their bet and ends their turn.
+     *
+     * @param string $game_id The game ID
+     * @param string $user_id The user ID
+     * @return array Status of the surrender action
+     */
+    public function surrender($game_id, $user_id): array
+    {
+        if (!$this->actionCheck->canSurrender($user_id, $game_id)) {
+            Response::error("Player can't surrender");
+        }
+
+        // Log the surrender action
+        $this->logAction($game_id, $user_id, 'surrender');
+
+        //todo
+        // Handle the surrender logic: update the game state and the player's bet
+//        $this->player->updateBetAfterSurrender($user_id, $game_id); // A function to reduce the player's bet by half
+
+        return ['status' => 'Player has surrendered, forfeiting half their bet'];
     }
 }

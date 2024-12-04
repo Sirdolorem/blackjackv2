@@ -6,12 +6,11 @@ use blackjack\Response;
 
 class Bet extends BetDatabaseHelper
 {
-    /**
-     * Bet constructor.
-     */
-    public function __construct()
+    private User $user;
+    public function __construct(User $user)
     {
         parent::__construct();
+        $this->user = $user;
     }
 
     /**
@@ -26,8 +25,36 @@ class Bet extends BetDatabaseHelper
         return $this->fetchCurrentBet($userId, $gameId);
     }
 
-    //TODO
-    // withdraw cash
+    /**
+     * Add chips to the user's balance after a win.
+     *
+     * @param string $userId The user ID
+     * @param int $winAmount The amount of chips to add
+     * @return int|bool New chip balance if the chips are successfully added, false otherwise
+     */
+    public function addChipsOnWin(string $userId, string $gameId, int $winAmount): int|bool
+    {
+        // Ensure the win amount is positive
+        if ($winAmount <= 0) {
+            Response::error("Invalid win amount.");
+            return false;
+        }
+
+        // Fetch the user's current chip balance
+        $userChips = $this->user->getUserChips($userId, $gameId);
+
+        // Add the win amount to the user's balance
+        $newChipBalance = $userChips + $winAmount;
+
+        // Update the user's chip balance in the database
+        if ($this->user->updateUserChips($userId, $newChipBalance)) {
+            return $newChipBalance;
+        }
+
+        // If there was an error updating the balance
+        Response::error("Failed to add chips.");
+        return false;
+    }
 
 
     /**
@@ -86,7 +113,6 @@ class Bet extends BetDatabaseHelper
     public function doubleBet(string $userId, string $gameId): bool
     {
         $currentBetData = $this->getCurrentBet($userId, $gameId);
-
         if ($currentBetData === null) {
             Response::error("No bet found to double.");
             return false;
@@ -96,6 +122,8 @@ class Bet extends BetDatabaseHelper
             Response::error("The bet is already doubled.");
             return false;
         }
+
+
 
         return $this->setDoubleBetFlag($userId, $gameId);
     }

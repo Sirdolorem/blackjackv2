@@ -2,6 +2,8 @@
 
 namespace blackjack;
 
+use Couchbase\PlanningFailureException;
+
 class DependencyManager
 {
     private static array $instances = [];
@@ -27,7 +29,7 @@ class DependencyManager
     {
 
         if (in_array($class, self::$resolvingStack, true)) {
-            throw new \Exception("Circular dependency detected for class: $class");
+            Response::error("Circular dependency detected for class: $class");
         }
 
         if (!isset(self::$instances[$class])) {
@@ -62,15 +64,18 @@ class DependencyManager
                 self::get(Deck::class),
                 self::get(Player::class),
                 self::get(ActionCheck::class),
+                self::get(Bet::class)
             ),
             Middleware::class => new Middleware(),
-            Deck::class => new Deck(
-                self::get(Player::class),
+            Deck::class => new Deck(),
+            Bet::class => new Bet(
+                self::get(User::class),
             ),
-            Bet::class => new Bet(),
             ActionCheck::class => new ActionCheck(
                 self::get(Player::class),
                 self::get(Bet::class),
+                self::get(Deck::class),
+                self::get(Game::class)
             ),
             default => throw new \Exception("Class $class not recognized in DependencyManager."),
         };

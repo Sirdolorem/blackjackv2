@@ -67,6 +67,34 @@ class User extends UserDatabaseHelper
         Response::success(['token' => $token]);
     }
 
+    /**
+     * Fetch the current chips for a user.
+     *
+     * This method retrieves the current chip balance for the specified user from the database.
+     *
+     * @param string $userId The user ID
+     * @return int The current chip balance for the user
+     */
+    public function getUserChips(string $userId): int
+    {
+        return $this->fetchUserChips($userId);
+    }
+
+    /**
+     * Update the user's chip balance.
+     *
+     * This method updates the chip balance for the specified user. It is used when chips are added or subtracted,
+     * such as after a game round or when a player wins or loses.
+     *
+     * @param string $userId The user ID
+     * @param int $newChipBalance The new chip balance to set for the user
+     * @return bool True if the balance was updated successfully, false otherwise
+     */
+    public function updateUserChips(string $userId, int $newChipBalance): bool
+    {
+        return $this->updateUserChips($userId, $newChipBalance);
+    }
+
 /**
 * Hashes a password for storage
 *

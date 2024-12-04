@@ -137,11 +137,27 @@ class Response
 *
 * @param mixed $data The data to be debugged.
 */
-    public static function debug($data)
+    public static function debug($data, bool $pretty = false)
     {
-        echo "<pre>";
-        print_r($data);
-        echo "</pre>";
+        if ($pretty) {
+            highlight_string("<?php\n\$data =\n" . var_export($data, true) . ";\n?>");
+
+            exit();
+        }
+
+        // Check if data is an object or array
+        if (is_object($data) || is_array($data)) {
+            print_r($data);
+        }
+        // Handle plain text (string)
+        elseif (is_string($data)) {
+            echo $data;
+        }
+        // Handle other data types (integers, floats, etc.)
+        else {
+            var_dump($data);
+        }
+
         exit();
     }
 }

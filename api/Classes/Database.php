@@ -40,7 +40,7 @@ class Database
      */
     private function connect(): mysqli
     {
-        $host = Env::get("DB_HOST") ?? "localhost";
+        $host = Env::get("DB_HOST") ?? "db";
         $database = Env::get("MYSQL_DATABASE") ?? "blackjack";
         $username = Env::get("MYSQL_USER") ?? "blackjack";
         $password = Env::get("MYSQL_PASSWORD") ?? "";

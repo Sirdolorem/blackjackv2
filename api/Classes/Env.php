@@ -13,7 +13,7 @@ class Env
     public static function load(string $filePath): bool
     {
         if (!file_exists($filePath)) {
-            return false;
+            Response::error("Env file not found");
         }
 
         $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

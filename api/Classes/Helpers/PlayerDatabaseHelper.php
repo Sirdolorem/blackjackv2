@@ -4,6 +4,7 @@ namespace blackjack\Helpers;
 
 use blackjack\Helpers\DbHelper\DbHelper;
 use blackjack\Response;
+use PHP_CodeSniffer\Tests\Core\Tokenizers\PHP\ResolveSimpleTokenTest;
 
 abstract class PlayerDatabaseHelper extends DbHelper
 {
@@ -19,11 +20,11 @@ abstract class PlayerDatabaseHelper extends DbHelper
      * Updates the hand of a player in the database.
      *
      * @param string $playerId The ID of the player.
-     * @param mixed $hand The new hand to set.
+     * @param array $hand The new hand to set.
      * @param bool $overwrite Whether to overwrite the hand or merge it.
      * @return bool Returns true if the update was successful, false otherwise.
      */
-    abstract protected function updatePlayerHand(string $playerId, $hand, bool $overwrite = false): bool;
+    abstract protected function updatePlayerHand(string $playerId, array $hand, string $gameId, bool $overwrite = false): bool;
 
     /**
      * Checks if a player is part of a game.
@@ -103,9 +104,27 @@ abstract class PlayerDatabaseHelper extends DbHelper
      * @param string $userId The ID of the player.
      * @return array The player's hand, or an empty array if not found.
      */
+
+    /**
+     * Abstract method to check if an active user is set for a given game.
+     *
+     * @param string $gameId The game ID to check.
+     * @return bool Returns true if an active user is set, false otherwise.
+     */
+    abstract public function isActiveUserSet(string $gameId): bool;
+
+    /**
+     * Abstract method to set the active user for a given game.
+     *
+     * @param string $gameId The game ID to update.
+     * @param string $userId The user ID to set as active.
+     * @return bool Returns true if the active user was successfully set, false otherwise.
+     */
+    abstract public function setActiveUser(string $gameId, string $userId): bool;
+
     protected function fetchPlayerHand(string $userId): array
     {
-        $result = $this->executeStatement("SELECT hand FROM users WHERE user_id = ?", [$userId], true);
+        $result = $this->executeStatement("SELECT hand FROM hands WHERE user_id = ?", [$userId], true);
         return isset($result[0]['hand']) ? json_decode($result[0]['hand'], true) : [];
     }
 
@@ -124,24 +143,75 @@ abstract class PlayerDatabaseHelper extends DbHelper
     }
 
     /**
-     * Updates a player's hand in the 'users' table.
+     * Check if the active user is set for a given game.
+     *
+     * @param string $gameId The game ID to check.
+     * @return bool Returns true if an active user is set, false otherwise.
+     */
+    protected function selectActiveUser(string $gameId): bool
+    {
+        $result = $this->executeStatement("SELECT active_user FROM games WHERE game_id = ?", [$gameId]);
+
+        return !empty($result[0]['active_user']);
+    }
+
+    /**
+     * Set the active user for a given game.
+     *
+     * @param string $gameId The game ID to update.
+     * @param string $userId The user ID to set as active.
+     * @return bool Returns true if the active user was successfully set, false otherwise.
+     */
+    protected function updateActiveUser(string $gameId, string $userId): bool
+    {
+        return $this->executeStatement("UPDATE games SET active_user = ? WHERE game_id = ?", [$userId, $gameId]);
+    }
+
+    /**
+     * Checks if the player has a hand and either updates or inserts the hand.
      *
      * @param string $playerId The ID of the player.
-     * @param mixed $hand The new hand to set.
-     * @param bool $overwrite Whether to overwrite the hand or merge it.
-     * @return bool Returns true if the update was successful, false otherwise.
+     * @param array $hand The hand data (can be an array [[]] or a single card []).
+     * @param bool $overwrite Whether to overwrite the existing hand or not (default is false).
+     * @return bool Returns true if the hand is successfully updated or inserted, false otherwise.
      */
-    protected function setPlayerHand(string $playerId, $hand, bool $overwrite = false): bool
+    protected function setOrUpdatePlayerHand(string $playerId, array $hand, string $gameId, bool $overwrite = false): bool
     {
         try {
-            $updatedHand = $overwrite ? (is_array($hand) ? $hand : [$hand]) : array_merge($this->getPlayerHand($playerId), $hand);
-            $updatedHandJson = json_encode($updatedHand);
-            return $this->executeStatement("UPDATE users SET hand = ? WHERE user_id = ?", [$updatedHandJson, $playerId]);
+            $currentHand = $this->getPlayerHand($playerId);
+
+            (!$currentHand) ? $isCurrentHandEmpty = true : $isCurrentHandEmpty = false;
+            if ($overwrite) {
+                $currentHand = [$hand];
+            } else {
+                if (empty($currentHand)) {
+                    $currentHand = [$hand];
+                } else {
+                    array_push($currentHand, $hand);
+                }
+            }
+
+            $updatedHandJson = json_encode($currentHand, true);
+
+            // Update if the hand exists, otherwise insert
+            if (!$isCurrentHandEmpty) {
+                return $this->executeStatement(
+                    "UPDATE hands SET hand = ? WHERE user_id = ?",
+                    [$updatedHandJson, $playerId]
+                );
+            } else {
+                return $this->executeStatement(
+                    "INSERT INTO hands (user_id, hand, game_id) VALUES (?, ?, ?)",
+                    [$playerId, $updatedHandJson, $gameId]
+                );
+            }
         } catch (\Exception $e) {
             Response::error($e->getMessage());
             return false;
         }
     }
+
+
 
     /**
      * Checks if a player is already in a game.
@@ -192,7 +262,7 @@ abstract class PlayerDatabaseHelper extends DbHelper
      */
     protected function deletePlayerHand(string $gameId, string $userId): bool
     {
-        $sql = "DELETE FROM hand WHERE game_id = ? AND user_id = ?";
+        $sql = "DELETE FROM hands WHERE game_id = ? AND user_id = ?";
         $params = [$gameId, $userId];
         return $this->executeStatement($sql, $params);
     }
@@ -206,10 +276,9 @@ abstract class PlayerDatabaseHelper extends DbHelper
      * @param string $gameId The ID of the game.
      * @return bool Returns true if the addition was successful, false otherwise.
      */
-    protected function addPlayerToSlot(array $players, int $slot, string $userId, string $gameId): bool
+    protected function addPlayerToSlot(int $slot, string $userId, string $gameId): bool
     {
-        $players[$slot - 1] = $userId;
-        return $this->executeStatement("UPDATE players SET user_id = ? WHERE game_id = ? AND slot = ?", [$userId, $gameId, $slot]);
+        return $this->executeStatement("INSERT INTO players (user_id, game_id, slot) VALUES (?, ?, ?)", [$userId, $gameId, $slot]);
     }
 
     /**

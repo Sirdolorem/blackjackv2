@@ -31,10 +31,31 @@ class Game extends GameDatabaseHelper
     }
 
     /**
+     * Check the current status of a game.
+     *
+     * This method fetches the current status of the game from the database and if it exists.
+     *
+     * It returns the status (e.g., 'active', 'completed', etc.) of the game.
+     *
+     * @param string $gameId The ID of the game to check
+     * @return string|bool The current status of the game or false if game don't exists
+     */
+    public function checkGameStatus(string $gameId): string|bool
+    {
+        if (!$this->getGame($gameId)) {
+            return false;
+        }
+        $status = $this->fetchGameStatus($gameId);
+
+        return $status ?? 'unknown';
+    }
+
+
+    /**
      * Create a new game and initialize the deck.
      * The game ID is generated, and a deck is created and stored in the database.
      */
-    public function createGame(): void
+    public function createGame(): string
     {
         $gameId = $this->generateGameId();
         $deck = json_encode($this->deck->createDeck());
@@ -45,8 +66,7 @@ class Game extends GameDatabaseHelper
         // Commit the transaction
         $this->conn->commit();
 
-        // Send success response
-        Response::success("Game created successfully", ['game_id' => $gameId]);
+        return $gameId;
     }
 
     /**

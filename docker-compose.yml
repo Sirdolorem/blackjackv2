@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:latest
-    container_name: lamp_db
+    container_name: db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -13,11 +13,11 @@ services:
       - db_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - lamp_network
+      - blackjack
 
   web:
     image: php:8.1-apache
-    container_name: lamp_web
+    container_name: web
     volumes:
       - ./www:/var/www/html
     ports:
@@ -26,15 +26,16 @@ services:
       - APACHE_DOCUMENT_ROOT=/var/www/html
     working_dir: /var/www/html
     networks:
-      - lamp_network
+      - blackjack
     depends_on:
       - db
 
   api:
     image: php:8.1-apache
-    container_name: lamp_api
+    container_name: api
     volumes:
       - ./api:/var/www/html
+      - ./.env:/var/www/html/.env
     build:
       context: .
       dockerfile: Dockerfile
@@ -44,14 +45,14 @@ services:
       - APACHE_DOCUMENT_ROOT=/var/www/html
     working_dir: /var/www/html
     networks:
-      - lamp_network
+      - blackjack
     depends_on:
       - db
     command: bash -c "apt-get update && apt-get install -y libzip-dev unzip && docker-php-ext-install zip && apache2-foreground"
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: lamp_phpmyadmin
+    container_name: phpmyadmin
     restart: always
     environment:
       PMA_HOST: db
@@ -61,10 +62,10 @@ services:
     depends_on:
       - db
     networks:
-      - lamp_network
+      - blackjack
 
 volumes:
   db_data:
 
 networks:
-  lamp_network:
+  blackjack:

@@ -14,13 +14,14 @@ if (!isset($data['game_id'], $data['user_id'], $data['action'])) {
 $gameId = $data['game_id'];
 $userId = $data['user_id'];
 $action = strtolower($data['action']);
-$game = DependencyManager::get(GameActions::class);
+$gameActions = DependencyManager::get(GameActions::class);
 
 $result = match ($action) {
-    'hit' => $game->hit($gameId, $userId),
-    'stand' => $game->stand($gameId, $userId),
-    'split' => $game->split($gameId, $userId),
-    'double' => $game->double($gameId, $userId),
+    'hit' => $gameActions->hit($gameId, $userId),
+    'stand' => $gameActions->stand($gameId, $userId),
+    'split' => $gameActions->split($gameId, $userId),
+    'double' => $gameActions->double($gameId, $userId),
+    'surrender' => $gameActions->surrender($gameId, $userId),
     default => ['error' => 'Invalid action'],
 };
 

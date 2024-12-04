@@ -69,4 +69,34 @@ abstract class UserDatabaseHelper extends DbHelper
             return false;
         }
     }
+
+    /**
+     * Fetch the current chips for a user.
+     *
+     * @param string $userId The user ID
+     * @return int The current chip balance for the user
+     */
+    public function fetchUserChips(string $userId): int
+    {
+        // Fetch the user's chip balance from the users table
+        $query = "SELECT chips FROM users WHERE user_id = ?";
+        $result = $this->executeStatement($query, [$userId], true);
+
+        // If the user exists, return the chips value, otherwise return 0
+        return $result[0]['chips'] ?? 0; // Default to 0 if no result
+    }
+
+    /**
+     * Update the user's chip balance.
+     *
+     * @param string $userId The user ID
+     * @param int $newChipBalance The new chip balance
+     * @return bool True if the balance is updated successfully, false otherwise
+     */
+    public function updateUserChips(string $userId, int $newChipBalance): bool
+    {
+        // Update the user's chip balance in the database
+        $query = "UPDATE users SET chips = ? WHERE user_id = ?";
+        return $this->executeStatement($query, [$newChipBalance, $userId]);
+    }
 }

@@ -5,14 +5,12 @@ use blackjack\Helpers\DeckDatabaseHelper;
 
 class Deck extends DeckDatabaseHelper
 {
-    private Player $player;
     /**
      * Deck constructor.
      * Initializes the deck database helper.
      */
-    public function __construct(Player $player)
+    public function __construct()
     {
-        $this->player = $player;
         parent::__construct();
     }
 
@@ -64,15 +62,16 @@ class Deck extends DeckDatabaseHelper
     }
 
     /**
-     * Check if the deck is empty.
+     * Check if the deck is empty for a given game.
      *
-     * @param array $deck The deck to be checked
+     * @param string $gameId The game ID for which the deck should be checked
      * @return bool True if the deck is empty, false otherwise
      */
-    public function checkIfDeckEmpty(array $deck): bool
+    public function checkIfDeckEmpty(string $gameId): bool
     {
-        return empty($deck);
+        return empty($this->fetchDeckFromDatabase($gameId));
     }
+
 
     /**
      * Get the value of a card based on its rank.
@@ -95,8 +94,9 @@ class Deck extends DeckDatabaseHelper
      * @param string $gameId The game ID.
      * @param string $playerId The player ID.
      * @param int $numCards The number of cards to deal.
+     * @return array Returns dealt cards from deck
      */
-    public function dealCards(string $gameId, string $playerId, int $numCards): void
+    public function dealCards(string $gameId, string $playerId, int $numCards): array
     {
         $deck = $this->getDeck($gameId);
 
@@ -108,6 +108,6 @@ class Deck extends DeckDatabaseHelper
 
         $this->updateDeck($gameId, $deck);
 
-        $this->player->updatePlayerHand($playerId, $dealtCards);
+        return $dealtCards;
     }
 }

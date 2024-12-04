@@ -57,20 +57,21 @@ abstract class BetDatabaseHelper extends DbHelper
      *
      * @param string $userId The ID of the user.
      * @param string $gameId The ID of the game.
-     * @return array|null The current bet and is_double flag, or null if not found.
+     * @return array|false The current [bet] and [is_double] flag, or null if not found.
      */
-    protected function fetchCurrentBet(string $userId, string $gameId): array|null
+    protected function fetchCurrentBet(string $userId, string $gameId): array|false
     {
         $query = "SELECT bet, is_double FROM game_bets WHERE game_id = ? AND user_id = ?";
         $params = [$gameId, $userId];
         $result = $this->executeStatement($query, $params, true);
 
         if (empty($result)) {
-            return null;
+            return false;
         }
 
-        return [$result[0]['bet'], $result[0]['is_double']];
+        return $result[0];
     }
+
 
     /**
      * Adds a bet for a user in a specific game.
