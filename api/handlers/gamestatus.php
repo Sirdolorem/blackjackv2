@@ -47,27 +47,4 @@ $status = [
     'lastAction' => $lastAction,
 ];
 
-if ($playerTurn) {
-    $result = $player->joinGame($userId, $gameId);
-
-    if (!$result) {
-        Response::error('Unable to join the game');
-        return;
-    }
-
-    // Deal cards to the player if joining for the first time
-    $deck->dealCards($gameId, $userId, 2);
-
-    // Set the player as the active player if necessary
-    if (!$player->isActiveUserSet($userId)) {
-        $setActivePlayerResult = $player->setActiveUser($gameId, $userId);
-        if (!$setActivePlayerResult) {
-            Response::error('Unable to set active player');
-            return;
-        }
-    }
-
-    Response::success('Game status retrieved successfully', $status);
-} else {
-    Response::error('It is not your turn to play');
-}
+Response::success($status);
