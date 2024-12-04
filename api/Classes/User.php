@@ -137,7 +137,7 @@ class User extends UserDatabaseHelper
     private function generateUserId(): string
     {
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $userId = 'U_'; // Start with 'U_'
+        $userId = 'U_';
 
         for ($i = 0; $i < 4; $i++) {
             $userId .= $characters[random_int(0, strlen($characters) - 1)];
