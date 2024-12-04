@@ -5,7 +5,6 @@ function checkAuth() {
         window.location.href = '/login.html';
     }
 
-    // Optionally, you can validate the token with the server
     // fetch('/validate-token.php', { headers: { 'Authorization': `Bearer ${token}` } })
     //   .then(response => response.json())
     //   .then(data => {
