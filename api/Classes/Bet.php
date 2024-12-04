@@ -34,24 +34,19 @@ class Bet extends BetDatabaseHelper
      */
     public function addChipsOnWin(string $userId, string $gameId, int $winAmount): int|bool
     {
-        // Ensure the win amount is positive
         if ($winAmount <= 0) {
             Response::error("Invalid win amount.");
             return false;
         }
 
-        // Fetch the user's current chip balance
         $userChips = $this->user->getUserChips($userId, $gameId);
 
-        // Add the win amount to the user's balance
         $newChipBalance = $userChips + $winAmount;
 
-        // Update the user's chip balance in the database
         if ($this->user->updateUserChips($userId, $newChipBalance)) {
             return $newChipBalance;
         }
 
-        // If there was an error updating the balance
         Response::error("Failed to add chips.");
         return false;
     }
