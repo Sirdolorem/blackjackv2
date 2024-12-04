@@ -145,15 +145,12 @@ class Response
             exit();
         }
 
-        // Check if data is an object or array
         if (is_object($data) || is_array($data)) {
             print_r($data);
         }
-        // Handle plain text (string)
         elseif (is_string($data)) {
             echo $data;
         }
-        // Handle other data types (integers, floats, etc.)
         else {
             var_dump($data);
         }
